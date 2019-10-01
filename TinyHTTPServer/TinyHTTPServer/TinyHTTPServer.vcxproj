@@ -128,10 +128,12 @@
     <ClCompile Include="httpServer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="request.cpp" />
+    <ClCompile Include="response.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="httpServer.h" />
     <ClInclude Include="request.h" />
+    <ClInclude Include="response.h" />
     <ClInclude Include="syncLock.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>

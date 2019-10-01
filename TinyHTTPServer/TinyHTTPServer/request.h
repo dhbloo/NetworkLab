@@ -7,7 +7,6 @@
 #include <map>
 
 struct Request {
-
     enum Method { GET, HEAD, UNSUPPORTED } method;
 
     std::string methodStr;
@@ -22,7 +21,6 @@ struct Request {
 
 
     static Request parse(std::stringstream& ss);
-
 };
 
 

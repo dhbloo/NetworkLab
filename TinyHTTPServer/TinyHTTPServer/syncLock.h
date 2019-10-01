@@ -8,8 +8,6 @@
 class SyncLock {
     std::mutex lock;
 public:
-    ~SyncLock() { lock.unlock(); }
-
     struct out_t { std::mutex& mtx; } out{ lock };
     struct endl_t { std::mutex& mtx; } endl{ lock };
     struct unlock_t { std::mutex& mtx; } unlock{ lock };

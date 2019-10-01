@@ -1,5 +1,6 @@
 #include "HttpServer.h"
 #include "request.h"
+#include "response.h"
 
 #include <ws2tcpip.h>
 #include <stdexcept>
@@ -67,10 +68,12 @@ HttpServer::~HttpServer() {
 
 void HttpServer::handleConnection(Connection&& conn) {
     char recvbuf[MaxRequestBufferLength];
-    int bytesReceived, totalBytesReceived = 0;
+    int bytesReceived, totalBytesReceived = 0, sendRet;
 
     assert(conn.addr.sa_family == AF_INET);
     logStream << logLock.out << conn.ipv4_str() << " [Info]Connection accepted" << logLock.endl;
+
+    Response response{ "HTTP/1.1", 200 };
 
     do {
         std::stringstream receivedDataBuffer;
@@ -80,12 +83,11 @@ void HttpServer::handleConnection(Connection&& conn) {
 
         if (bytesReceived == 0) {
             logStream << logLock.out << conn.ipv4_str() << " [Info]Connection closed" << logLock.endl;
-            break;
+            return;
         }
         else if (bytesReceived < 0) {
             logStream << logLock.out << conn.ipv4_str() << " [Erro]Recv failed with error: "
-                << WSAGetLastError() << logLock.endl;
-
+                << WSAGetLastError() << ", closing connection" << logLock.endl;
             return;
         }
 
@@ -103,21 +105,33 @@ void HttpServer::handleConnection(Connection&& conn) {
         Request request;
         try {
             request = Request::parse(receivedDataBuffer);
-            logStream << logLock.out << conn.ipv4_str() << " [Info]Request(Total: "
-                << bytesReceived << " bytes) " << request.methodStr << request.version.substr(4)
-                << " " << request.url << logLock.endl;
+            logStream << logLock.out << conn.ipv4_str() << " [Info]Request(" << bytesReceived
+                << " bytes) " << request.methodStr << request.version.substr(4) << " "
+                << request.url << logLock.endl;
         }
         catch (std::runtime_error e) {
             logStream << logLock.out << conn.ipv4_str()
-                << " [Erro]Response(400 Bad Request): " << request.methodStr << logLock.endl;
-            return;
+                << " [Erro]Response(400 Bad Request): Unable to parse request" << logLock.endl;
+            response.statusCode = 400;
+            break;
         }
 
         // 检验是否是不支持的HTTP方法
         if (request.method == Request::UNSUPPORTED) {
             logStream << logLock.out << conn.ipv4_str()
-                << " [Erro]Response(501 Not Implemented): " << request.methodStr << logLock.endl;
-            return;
+                << " [Erro]Response(501 Not Implemented): Unsupported method "
+                << request.methodStr << logLock.endl;
+            response.statusCode = 501;
+            break;
+        }
+
+        // 检验HTTP版本
+        if (request.version != "HTTP/1.0" && request.version != "HTTP/1.1") {
+            logStream << logLock.out << conn.ipv4_str()
+                << " [Erro]Response(501 Not Implemented): Unsupport version "
+                << request.version << logLock.endl;
+            response.statusCode = 501;
+            break;
         }
 
 
@@ -133,6 +147,14 @@ void HttpServer::handleConnection(Connection&& conn) {
 
     } while (bytesReceived > 0);
 
+    std::string responseStr = response.toString();
+
+    sendRet = send(conn.socket, responseStr.c_str(), responseStr.length(), 0);
+    if (sendRet == SOCKET_ERROR) {
+        logStream << logLock.out << conn.ipv4_str() << " [Erro]Send(" << responseStr.length()
+            << " bytes) failed with error: " << WSAGetLastError() << ", closing connection"
+            << logLock.endl;
+    }
 }
 
 void HttpServer::run() {

@@ -6,7 +6,7 @@
 int main() {
 
     try {
-        HttpServer server(5050, std::cout);
+        HttpServer server(5000, std::cout);
 
         server.run();
     }
