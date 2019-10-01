@@ -28,7 +28,7 @@ class HttpServer {
     void handleConnection(Connection&& conn);
 
 public:
-    static const int MaxRequestBufferLength = 4096;
+    static const int MaxRequestBufferLength = 8192;
 
     HttpServer(uint16_t port, std::ostream& logStream);
     ~HttpServer();

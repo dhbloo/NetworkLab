@@ -111,7 +111,7 @@ void HttpServer::handleConnection(Connection&& conn) {
         }
         catch (std::runtime_error e) {
             logStream << logLock.out << conn.ipv4_str()
-                << " [Erro]Response(400 Bad Request): Unable to parse request" << logLock.endl;
+                << " [Erro]Response(400 Bad Request): " << e.what() << logLock.endl;
             response.statusCode = 400;
             break;
         }
