@@ -7,7 +7,7 @@
 #include <map>
 
 struct Request {
-    enum Method { GET, HEAD, UNSUPPORTED } method;
+    enum Method { GET = 1, HEAD = 2, UNSUPPORTED = 0 } method;
 
     std::string methodStr;
 
@@ -18,6 +18,8 @@ struct Request {
     std::map<std::string, std::string> headers;
 
     std::map<std::string, std::string> querys;
+
+    std::map<std::string, std::string> urlParams;
 
     std::string body;
 

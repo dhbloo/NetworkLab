@@ -145,6 +145,7 @@ void HttpServer::handleConnection(Connection&& conn) {
         }
 
 
+
     } while (bytesReceived > 0);
 
     std::string responseStr = response.toString();

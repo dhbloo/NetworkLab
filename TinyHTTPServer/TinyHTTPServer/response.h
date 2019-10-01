@@ -9,7 +9,6 @@
 struct Response {
     static std::map<int, std::string> statusMap;
 
-
     std::string version;
 
     int statusCode;
@@ -20,6 +19,7 @@ struct Response {
 
 
     std::string toString() const;
+    std::string statusInfo() const;
 };
 
 #endif

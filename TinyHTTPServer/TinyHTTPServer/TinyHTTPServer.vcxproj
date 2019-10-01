@@ -130,13 +130,17 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="request.cpp" />
     <ClCompile Include="response.cpp" />
+    <ClCompile Include="router.cpp" />
+    <ClCompile Include="view.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="httpServer.h" />
     <ClInclude Include="request.h" />
     <ClInclude Include="response.h" />
+    <ClInclude Include="router.h" />
     <ClInclude Include="syncLock.h" />
     <ClInclude Include="util.h" />
+    <ClInclude Include="view.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
