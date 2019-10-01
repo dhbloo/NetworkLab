@@ -2,7 +2,7 @@
 #include "request.h"
 #include <regex>
 
-Router::Router() : fallbackView(0) {}
+Router::Router() {}
 
 void Router::setRoute(std::string url, ViewPtr view) {
     const std::regex urlParamRe("<[^<>/]+>");
@@ -48,5 +48,5 @@ ViewPtr Router::resolve(Request& request) {
         }
     }
 
-    return fallbackView;
+    return nullptr;
 }

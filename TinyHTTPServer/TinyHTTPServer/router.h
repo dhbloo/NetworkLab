@@ -9,12 +9,10 @@
 
 class Request;
 class View;
-//using ViewPtr = std::shared_ptr<View>;
-using ViewPtr = int;
+using ViewPtr = std::shared_ptr<View>;
 
 class Router {
     std::map<std::string, std::pair<ViewPtr, std::vector<std::string>>> urlMap;
-    ViewPtr fallbackView;
 
 public:
     Router();

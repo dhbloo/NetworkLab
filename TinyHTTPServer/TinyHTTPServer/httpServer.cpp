@@ -128,9 +128,9 @@ void HttpServer::handleConnection(Connection&& conn) {
         // ºÏ—ÈHTTP∞Ê±æ
         if (request.version != "HTTP/1.0" && request.version != "HTTP/1.1") {
             logStream << logLock.out << conn.ipv4_str()
-                << " [Erro]Response(501 Not Implemented): Unsupport version "
+                << " [Erro]Response(505 Not Implemented): Unsupport http version "
                 << request.version << logLock.endl;
-            response.statusCode = 501;
+            response.statusCode = 505;
             break;
         }
 
