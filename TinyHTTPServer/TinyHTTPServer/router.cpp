@@ -5,9 +5,9 @@
 Router::Router() : fallbackView(0) {}
 
 void Router::setRoute(std::string url, ViewPtr view) {
-    const std::regex urlParamRe("<[^>/]+>");
-    const std::regex urlParamPathRe("<path:[^>/]+>");
-    const std::regex urlParamSearchRe("<[^>/]+>|<path:[^>/]+>");
+    const std::regex urlParamRe("<[^<>/]+>");
+    const std::regex urlParamPathRe("<path:[^<>/]+>");
+    const std::regex urlParamSearchRe("<[^<>/]+>|<path:[^<>/]+>");
 
     std::string urlRe(
         std::regex_replace(
