@@ -1,7 +1,25 @@
 #include "request.h"
 #include <cassert>
 #include <vector>
+#include <map>
 #include <stdexcept>
+#include <sstream>
+
+static const std::map<std::string, Request::Method> MethodMap = {
+    {"GET", Request::GET},
+    {"HEAD", Request::HEAD},
+    {"POST", Request::POST},
+    {"PUT", Request::PUT},
+    {"DELETE", Request::DEL},
+    {"OPTIONS", Request::OPTIONS}
+};
+
+static const std::vector<std::string> UnImpMethods = {
+    "TRACE",
+    "CONNECT",
+    "LINK",
+    "UNLINK"
+};
 
 Request Request::parse(std::stringstream& ss) {
     Request request;
@@ -10,29 +28,16 @@ Request Request::parse(std::stringstream& ss) {
     ss >> request.methodStr >> request.url >> request.version;
 
     // 解析HTTP方法
-    if (request.methodStr == "GET") {
-        request.method = Request::GET;
+    auto methodIt = MethodMap.find(request.methodStr);
+    if (methodIt != MethodMap.end()) {
+        request.method = methodIt->second;
     }
-    else if (request.methodStr == "HEAD") {
-        request.method = Request::HEAD;
+    else if (std::find(UnImpMethods.begin(), UnImpMethods.end(), request.methodStr) != UnImpMethods.end()) {
+        request.method = Request::UNSUPPORTED;
+        return request;
     }
     else {
-        std::vector<std::string> methods = {
-            "POST",
-            "PUT",
-            "DELETE",
-            "OPTIONS",
-            "TRACE",
-            "CONNECT"
-        };
-
-        if (std::find(methods.begin(), methods.end(), request.methodStr) != methods.end()) {
-            request.method = Request::UNSUPPORTED;
-            return request;
-        }
-        else {
-            throw std::runtime_error("Not a http request");
-        }
+        throw std::runtime_error("Not a http request");
     }
 
     // 解析URL中的查询请求

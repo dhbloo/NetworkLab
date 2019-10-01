@@ -2,7 +2,7 @@
 #include <sstream>
 #include <cassert>
 
-std::map<int, std::string> Response::statusMap = {
+static std::map<int, std::string> StatusMap = {
     {200, "OK"},
 
     {400, "Bad Request"},
@@ -30,6 +30,6 @@ std::string Response::toString() const {
 }
 
 std::string Response::statusInfo() const {
-    assert(statusMap.find(statusCode) != statusMap.end());
-    return statusMap[statusCode];
+    assert(StatusMap.find(statusCode) != StatusMap.end());
+    return StatusMap[statusCode];
 }

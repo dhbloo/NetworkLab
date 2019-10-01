@@ -2,12 +2,19 @@
 #define _HEADER_REQUEST_
 #pragma once
 
-#include <sstream>
 #include <string>
 #include <map>
 
 struct Request {
-    enum Method { GET = 1, HEAD = 2, UNSUPPORTED = 0 } method;
+    enum Method { 
+        GET = 1, 
+        HEAD = 2, 
+        POST = 4, 
+        PUT = 8, 
+        DEL = 16,
+        OPTIONS = 32,
+        UNSUPPORTED = 0
+    } method;
 
     std::string methodStr;
 

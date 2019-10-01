@@ -7,8 +7,6 @@
 
 
 struct Response {
-    static std::map<int, std::string> statusMap;
-
     std::string version;
 
     int statusCode;
