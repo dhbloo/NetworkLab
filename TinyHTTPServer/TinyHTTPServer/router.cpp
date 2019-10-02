@@ -1,11 +1,13 @@
 #include "router.h"
 #include "request.h"
+#include "requestExcept.h"
+#include "response.h"
 #include <regex>
 #include <algorithm>
 
 Router::Router() {}
 
-void Router::setRoute(std::string url, ViewPtr view, int supportedMethods) {
+void Router::setRoute(std::string url, int supportedMethods, ViewPtr view) {
     const std::regex urlParamRe("<[^<>/]+>");
     const std::regex urlParamPathRe("<path:[^<>/]+>");
     const std::regex urlParamSearchRe("<[^<>/]+>|<path:[^<>/]+>");
@@ -52,14 +54,20 @@ void Router::removeErrorHandler(int statusCode) {
     errorMap.erase(statusCode);
 }
 
-ViewPtr Router::resolve(Request& request) const {
+ViewPtr Router::resolve(Request& request, Response& response) const {
     for (auto r = urlMap.cbegin(); r != urlMap.cend(); r++) {
-        if (!(request.method & r->supportedMethods))
-            continue;
-
         std::regex urlRe(r->urlRegex);
         std::smatch match;
         if (std::regex_match(request.url, match, urlRe)) {
+            if (!(request.method & r->supportedMethods)) {
+                std::string allowed = getAllowedString(r->supportedMethods);
+                if (!allowed.empty())
+                    response.headers["Allow"] = allowed;
+
+                throw Abort(405, "Method " + request.method +
+                    std::string(" not allowed for ") + request.url);
+            }
+
             for (int i = 1; i < match.size(); i++) {
                 request.urlParams[r->paramNames[i - 1]] = match[i].str();
             }
@@ -67,10 +75,27 @@ ViewPtr Router::resolve(Request& request) const {
         }
     }
 
+    throw Abort(404, "Url not found " + request.url);
     return nullptr;
 }
 
 ViewPtr Router::getErrorHandler(int statusCode) const {
     auto it = errorMap.find(statusCode);
     return it != errorMap.end() ? it->second : nullptr;
+}
+
+std::string Router::getAllowedString(int methods) const {
+    std::string allowed;
+    if (methods & Request::GET) allowed.append("GET, ");
+    if (methods & Request::HEAD) allowed.append("HEAD, ");
+    if (methods & Request::POST) allowed.append("POST, ");
+    if (methods & Request::PUT) allowed.append("PUT, ");
+    if (methods & Request::DEL) allowed.append("DELETE, ");
+    if (methods & Request::OPTIONS) allowed.append("OPTIONS, ");
+
+    if (!allowed.empty()) {
+        allowed.pop_back();
+        allowed.pop_back();
+    }
+    return allowed;
 }

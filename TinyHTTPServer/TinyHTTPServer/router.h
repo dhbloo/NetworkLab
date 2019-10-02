@@ -8,6 +8,7 @@
 #include <vector>
 
 class Request;
+class Response;
 class View;
 using ViewPtr = std::shared_ptr<View>;
 
@@ -22,19 +23,21 @@ public:
 
     Router();
 
-    void setRoute(std::string url, ViewPtr view, int supportedMethods);
+    void setRoute(std::string url, int supportedMethods, ViewPtr view);
     void removeRoute(std::string url);
     const std::vector<Route>& getAllRoutes() const;
 
     void setErrorHandler(int statusCode, ViewPtr view);
     void removeErrorHandler(int statusCode);
 
-    ViewPtr resolve(Request& request) const;
+    ViewPtr resolve(Request& request, Response& response) const;
     ViewPtr getErrorHandler(int statusCode) const;
 
 private:
     std::vector<Route> urlMap;
     std::map<int, ViewPtr> errorMap;
+
+    std::string getAllowedString(int supportedMethods) const;
 };
 
 #endif

@@ -132,6 +132,8 @@
     <ClCompile Include="response.cpp" />
     <ClCompile Include="router.cpp" />
     <ClCompile Include="routerView.cpp" />
+    <ClCompile Include="staticFileView.cpp" />
+    <ClCompile Include="util.cpp" />
     <ClCompile Include="view.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -141,7 +143,9 @@
     <ClInclude Include="response.h" />
     <ClInclude Include="router.h" />
     <ClInclude Include="routerView.h" />
+    <ClInclude Include="staticFileView.h" />
     <ClInclude Include="syncLock.h" />
+    <ClInclude Include="util.h" />
     <ClInclude Include="view.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -36,6 +36,12 @@
     <ClCompile Include="routerView.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="staticFileView.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HttpServer.h">
@@ -60,6 +66,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="requestExcept.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="staticFileView.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

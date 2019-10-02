@@ -5,7 +5,15 @@
 static std::map<int, std::string> StatusMap = {
     {200, "OK"},
 
+    {301, "Moved Permanently"},
+    {302, "Found"},
+    {303, "See Other"},
+    {304, "Not Modified"},
+
     {400, "Bad Request"},
+    {403, "Forbidden"},
+    {404, "Not Found"},
+    {405, "Method Not Allowed"},
 
     {500, "Internal Server Error"},
     {501, "Not Implemented"},

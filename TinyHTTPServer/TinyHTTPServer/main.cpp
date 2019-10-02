@@ -1,4 +1,6 @@
-#include "HttpServer.h"
+#include "httpServer.h"
+#include "staticFileView.h"
+#include "request.h"
 
 #include <iostream>
 
@@ -6,7 +8,9 @@ int main() {
 
     try {
         Router router;
-        router.setRoute("/", nullptr, 1);
+        ViewPtr sfv = std::make_shared<StaticFileView>(R"(C:\Users\dhb\Desktop\test)");
+        router.setRoute("/", Request::GET, sfv);
+        router.setRoute("/<path:filepath>", Request::GET, sfv);
         router.setErrorHandler(404, nullptr);
 
         HttpServer server(5000, router, std::cout);

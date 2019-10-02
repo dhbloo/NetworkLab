@@ -3,6 +3,7 @@
 #include "requestExcept.h"
 #include "response.h"
 #include "view.h"
+#include "util.h"
 
 #include <ws2tcpip.h>
 #include <stdexcept>
@@ -82,10 +83,8 @@ void HttpServer::handleConnection(Connection&& conn) {
         //do {
         bytesReceived = recv(conn.socket, recvbuf, sizeof(recvbuf) - 1, 0);
 
-        if (bytesReceived == 0) {
-            logStream << logLock.out << conn.ipv4_str() << " [Info]Connection closed" << logLock.endl;
-            return;
-        }
+        if (bytesReceived == 0)
+            break;
         else if (bytesReceived < 0) {
             logStream << logLock.out << conn.ipv4_str() << " [Erro]Recv failed with error: "
                 << WSAGetLastError() << ", closing connection" << logLock.endl;
@@ -102,9 +101,16 @@ void HttpServer::handleConnection(Connection&& conn) {
         logStream << logLock.out << conn.ipv4_str() << " [Info]Received "
             << bytesReceived << " bytes" << logLock.endl;
 
-        // 从接受数据中解析Request
         Request request;
         try {
+            // 在响应中加入通用响应Headers(Server, Date, Connection)
+            response.headers["Server"] = serverName;
+            response.headers["Date"] = Rfc1123DateTimeNow();
+            if (   request.version == "HTTP/1.1" && request.getHeader("Connection") == "Close"
+                || request.version == "HTTP/1.0" && request.getHeader("Connection") != "Keep-Alive")
+                response.headers["Connection"] = "close";
+
+            // 从接受数据中解析Request
             request = Request::parse(receivedDataBuffer);
             logStream << logLock.out << conn.ipv4_str() << " [Info]Request("
                 << bytesReceived << " bytes) " << request.methodStr
@@ -129,15 +135,15 @@ void HttpServer::handleConnection(Connection&& conn) {
                     << logLock.endl;
             }
 
-            // 根据Router中的配置获得View, 没有找到则丢出404错误
-            ViewPtr view = router.resolve(request);
-            if (view)
-                view->handle(request, response);
-            else
-                throw Abort(404, "Url not found " + request.url);
+            // 根据Router中的配置获得View, 没有找到则丢出404/405错误
+            router.resolve(request, response)->handle(request, response);
 
-
-            
+            // 给响应加入实体Headers(Encoding, Length, MD5)
+            if (response.headers.find("Content-Encoding") == response.headers.end()) {
+                response.headers["Content-Encoding"] = "identity";
+                response.headers["Content-Length"] = std::to_string(response.body.length());
+            }
+            // TODO: MD5
 
         }
         // 处理请求重定向异常
@@ -146,10 +152,14 @@ void HttpServer::handleConnection(Connection&& conn) {
             logStream << logLock.out << conn.ipv4_str() << " [Info]Response("
                 << response.statusCode << " " << response.statusInfo() << "): "
                 << r.what() << " Location = " << r.url << logLock.endl;
+
+            response.headers["Location"] = r.url;
         }
         // 处理请求终止异常
         catch (Abort a) {
             response.statusCode = a.statusCode;
+            // 默认情况下终止连接
+            response.headers["Connection"] = "close";
             logStream << logLock.out << conn.ipv4_str() << " [Erro]Response("
                 << response.statusCode << " " << response.statusInfo() << "): "
                 << a.what() << logLock.endl;
@@ -158,27 +168,29 @@ void HttpServer::handleConnection(Connection&& conn) {
             ViewPtr errorView = router.getErrorHandler(response.statusCode);
             if (errorView)
                 errorView->handle(request, response);
-            else {
+            else
                 response.body = "";
-            }
         }
 
-        // 发送相应
+        // 发送响应
         if (!sendResponse(conn, response))
             return;
 
         // 检验是否为持久链接
-        if (   request.version == "HTTP/1.1" && request.getHeader("Connection") == "Close"
-            || request.version == "HTTP/1.0" && request.getHeader("Connection") != "Keep-Alive")
+        auto connHeaderIt = response.headers.find("Connection");
+        if (connHeaderIt != response.headers.end() &&
+            connHeaderIt->second == "close")
             break;
 
     } while (bytesReceived > 0);
+
+    logStream << logLock.out << conn.ipv4_str() << " [Info]Connection closed" << logLock.endl;
 }
 
 bool HttpServer::sendResponse(const Connection& conn, Response& response) {
     std::string responseStr = response.toString();
 
-    int sendRet = send(conn.socket, responseStr.c_str(), responseStr.length(), 0);
+    int sendRet = send(conn.socket, responseStr.c_str(), responseStr.size() + 1, 0);
     if (sendRet == SOCKET_ERROR) {
         logStream << logLock.out << conn.ipv4_str() << " [Erro]Send(" << responseStr.length()
             << " bytes) failed with error: " << WSAGetLastError() << ", closing connection"

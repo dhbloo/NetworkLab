@@ -6,6 +6,8 @@
 #include "router.h"
 #include <cstdint>
 #include <atomic>
+#include <string>
+#include <ostream>
 #include <winsock2.h>
 
 
@@ -36,6 +38,7 @@ class HttpServer {
 
 public:
     static const int MaxRequestBufferLength = 8192;
+    std::string serverName = "TinyHttpServer/0.1 (Windows)";
 
     HttpServer(uint16_t port, const Router& router, std::ostream& ostream);
     ~HttpServer();
