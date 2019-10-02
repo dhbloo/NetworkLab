@@ -6,7 +6,7 @@
 #include <map>
 
 struct Request {
-    enum Method  { 
+    enum Method {
         GET = 1, 
         HEAD = 2, 
         POST = 4, 
@@ -29,6 +29,9 @@ struct Request {
     std::map<std::string, std::string> urlParams;
 
     std::string body;
+
+
+    std::string getHeader(std::string key);
 
 
     static Request parse(std::stringstream& ss);

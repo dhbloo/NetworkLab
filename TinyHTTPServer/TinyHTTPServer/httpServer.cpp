@@ -2,6 +2,7 @@
 #include "request.h"
 #include "requestExcept.h"
 #include "response.h"
+#include "view.h"
 
 #include <ws2tcpip.h>
 #include <stdexcept>
@@ -75,7 +76,6 @@ void HttpServer::handleConnection(Connection&& conn) {
     logStream << logLock.out << conn.ipv4_str() << " [Info]Connection accepted" << logLock.endl;
 
     Response response{ "HTTP/1.1", 200 };
-
     do {
         std::stringstream receivedDataBuffer;
         // 读取缓冲区数据直到没有数据输入
@@ -129,31 +129,50 @@ void HttpServer::handleConnection(Connection&& conn) {
                     << logLock.endl;
             }
 
+            // 根据Router中的配置获得View, 没有找到则丢出404错误
             ViewPtr view = router.resolve(request);
-            if (!view)
+            if (view)
+                view->handle(request, response);
+            else
                 throw Abort(404, "Url not found " + request.url);
+
+
+            
+
         }
+        // 处理请求重定向异常
         catch (Redirect r) {
             response.statusCode = 302;
             logStream << logLock.out << conn.ipv4_str() << " [Info]Response("
                 << response.statusCode << " " << response.statusInfo() << "): "
                 << r.what() << " Location = " << r.url << logLock.endl;
-
-            break;
         }
+        // 处理请求终止异常
         catch (Abort a) {
             response.statusCode = a.statusCode;
             logStream << logLock.out << conn.ipv4_str() << " [Erro]Response("
                 << response.statusCode << " " << response.statusInfo() << "): "
                 << a.what() << logLock.endl;
 
-            break;
+            // 在Router中寻找是否有错误处理View
+            ViewPtr errorView = router.getErrorHandler(response.statusCode);
+            if (errorView)
+                errorView->handle(request, response);
+            else {
+                response.body = "";
+            }
         }
 
+        // 发送相应
+        if (!sendResponse(conn, response))
+            return;
+
+        // 检验是否为持久链接
+        if (   request.version == "HTTP/1.1" && request.getHeader("Connection") == "Close"
+            || request.version == "HTTP/1.0" && request.getHeader("Connection") != "Keep-Alive")
+            break;
 
     } while (bytesReceived > 0);
-
-    sendResponse(conn, response);
 }
 
 bool HttpServer::sendResponse(const Connection& conn, Response& response) {

@@ -20,6 +20,11 @@ static const std::vector<std::string> UnImpMethods = {
     "UNLINK"
 };
 
+std::string Request::getHeader(std::string key) {
+    auto it = headers.find(key);
+    return it != headers.end() ? it->second : "";
+}
+
 Request Request::parse(std::stringstream& ss) {
     Request request;
 

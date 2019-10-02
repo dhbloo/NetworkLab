@@ -44,6 +44,14 @@ const std::vector<Router::Route>& Router::getAllRoutes() const {
     return urlMap;
 }
 
+void Router::setErrorHandler(int statusCode, ViewPtr view) {
+    errorMap[statusCode] = view;
+}
+
+void Router::removeErrorHandler(int statusCode) {
+    errorMap.erase(statusCode);
+}
+
 ViewPtr Router::resolve(Request& request) const {
     for (auto r = urlMap.cbegin(); r != urlMap.cend(); r++) {
         if (!(request.method & r->supportedMethods))
@@ -60,4 +68,9 @@ ViewPtr Router::resolve(Request& request) const {
     }
 
     return nullptr;
+}
+
+ViewPtr Router::getErrorHandler(int statusCode) const {
+    auto it = errorMap.find(statusCode);
+    return it != errorMap.end() ? it->second : nullptr;
 }

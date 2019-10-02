@@ -7,6 +7,7 @@ int main() {
     try {
         Router router;
         router.setRoute("/", nullptr, 1);
+        router.setErrorHandler(404, nullptr);
 
         HttpServer server(5000, router, std::cout);
 

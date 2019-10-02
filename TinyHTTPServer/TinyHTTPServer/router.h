@@ -25,10 +25,16 @@ public:
     void setRoute(std::string url, ViewPtr view, int supportedMethods);
     void removeRoute(std::string url);
     const std::vector<Route>& getAllRoutes() const;
+
+    void setErrorHandler(int statusCode, ViewPtr view);
+    void removeErrorHandler(int statusCode);
+
     ViewPtr resolve(Request& request) const;
+    ViewPtr getErrorHandler(int statusCode) const;
 
 private:
     std::vector<Route> urlMap;
+    std::map<int, ViewPtr> errorMap;
 };
 
 #endif
