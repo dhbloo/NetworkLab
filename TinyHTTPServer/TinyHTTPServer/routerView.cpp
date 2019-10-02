@@ -4,15 +4,19 @@
 
 RouterView::RouterView(const Router& router) : router(router) {}
 
-#define HANDLER(func) \
-bool RouterView::func(Request& request, Response& response) { \
-    Request subRequest = request; \
-    subRequest.url = request.urlParams["router"]; \
-    ViewPtr viewPtr = router.resolve(subRequest); \
-    if (viewPtr) { return viewPtr->func(request, response); } \
-    else { response.statusCode = 404; return false; } \
-}
 
-HANDLER(handle);
-HANDLER(beforeRequest);
-HANDLER(afterRequest);
+void RouterView::handle(Request& request, Response& response) {
+    beforeRequest(request, response);
+
+    Request subRequest = request;
+    subRequest.url = request.urlParams["router"];
+
+    if (ViewPtr viewPtr = router.resolve(subRequest)) {
+        viewPtr->handle(request, response);
+    }
+    else {
+        response.statusCode = 404;
+    }
+
+    afterRequest(request, response);
+}

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "syncLock.h"
+#include "router.h"
 #include <cstdint>
 #include <atomic>
 #include <winsock2.h>
@@ -15,8 +16,11 @@ struct Connection {
     ~Connection();
     Connection() : socket(INVALID_SOCKET) {}
     Connection(Connection&& conn);
-    std::string ipv4_str();
+    std::string ipv4_str() const;
 };
+
+
+class Response;
 
 class HttpServer {
     SOCKET listenSocket;
@@ -25,12 +29,15 @@ class HttpServer {
     SyncLock logLock;
     std::atomic_bool running;
 
+    Router router;
+
     void handleConnection(Connection&& conn);
+    bool sendResponse(const Connection& conn, Response& response);
 
 public:
     static const int MaxRequestBufferLength = 8192;
 
-    HttpServer(uint16_t port, std::ostream& logStream);
+    HttpServer(uint16_t port, const Router& router, std::ostream& ostream);
     ~HttpServer();
 
     void run();

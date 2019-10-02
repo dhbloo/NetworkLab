@@ -1,10 +1,11 @@
 #include "router.h"
 #include "request.h"
 #include <regex>
+#include <algorithm>
 
 Router::Router() {}
 
-void Router::setRoute(std::string url, ViewPtr view) {
+void Router::setRoute(std::string url, ViewPtr view, int supportedMethods) {
     const std::regex urlParamRe("<[^<>/]+>");
     const std::regex urlParamPathRe("<path:[^<>/]+>");
     const std::regex urlParamSearchRe("<[^<>/]+>|<path:[^<>/]+>");
@@ -17,7 +18,8 @@ void Router::setRoute(std::string url, ViewPtr view) {
 
     std::smatch match;
     std::vector<std::string> paramNames;
-    while (std::regex_search(url, match, urlParamSearchRe)) {
+    std::string urlSuffix = url;
+    while (std::regex_search(urlSuffix, match, urlParamSearchRe)) {
         std::string paramStr = match[0].str();
 
         paramStr = paramStr.substr(1, paramStr.length() - 2);
@@ -25,26 +27,35 @@ void Router::setRoute(std::string url, ViewPtr view) {
             paramStr = paramStr.substr(5);
 
         paramNames.push_back(paramStr);
-        url = match.suffix();
+        urlSuffix = match.suffix();
     }
 
-    urlMap[urlRe] = std::make_pair(view, paramNames);
+    urlMap.push_back({ url, urlRe, supportedMethods, view, paramNames });
 }
 
 void Router::removeRoute(std::string url) {
-    urlMap.erase(url);
+    urlMap.erase(std::remove_if(
+        urlMap.begin(), urlMap.end(),
+        [&url](const Route& route) { return route.url == url; }
+    ));
 }
 
-ViewPtr Router::resolve(Request& request) {
-    for (auto it = urlMap.cbegin(); it != urlMap.cend(); it++) {
-        std::regex urlRe(it->first);
+const std::vector<Router::Route>& Router::getAllRoutes() const {
+    return urlMap;
+}
 
+ViewPtr Router::resolve(Request& request) const {
+    for (auto r = urlMap.cbegin(); r != urlMap.cend(); r++) {
+        if (!(request.method & r->supportedMethods))
+            continue;
+
+        std::regex urlRe(r->urlRegex);
         std::smatch match;
         if (std::regex_match(request.url, match, urlRe)) {
             for (int i = 1; i < match.size(); i++) {
-                request.urlParams[it->second.second[i - 1]] = match[i].str();
+                request.urlParams[r->paramNames[i - 1]] = match[i].str();
             }
-            return it->second.first; 
+            return r->view;
         }
     }
 

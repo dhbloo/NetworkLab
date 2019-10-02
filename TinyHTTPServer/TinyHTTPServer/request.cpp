@@ -1,8 +1,7 @@
 #include "request.h"
-#include <cassert>
+#include "requestExcept.h"
 #include <vector>
 #include <map>
-#include <stdexcept>
 #include <sstream>
 
 static const std::map<std::string, Request::Method> MethodMap = {
@@ -37,7 +36,7 @@ Request Request::parse(std::stringstream& ss) {
         return request;
     }
     else {
-        throw std::runtime_error("Not a http request");
+        throw Abort(400, "Not a http request");
     }
 
     // 解析URL中的查询请求
@@ -54,7 +53,7 @@ Request Request::parse(std::stringstream& ss) {
 
             size_t equalPos = kvStr.find_first_of('=');
             if (equalPos == std::string::npos) {
-                throw std::runtime_error("Error when parsing request query url");
+                throw Abort(400, "Error when parsing request query url");
             }
 
             request.querys[kvStr.substr(0, equalPos)] = kvStr.substr(equalPos + 1);
@@ -74,7 +73,7 @@ Request Request::parse(std::stringstream& ss) {
             size_t delimPos = line.find_first_of(':');
 
             if (delimPos == std::string::npos)
-                throw std::runtime_error("Error when parsing request header");
+                throw Abort(400, "Error when parsing request header");
 
             request.headers[std::string(line.substr(0, delimPos))] = line.substr(delimPos + 2);
         }

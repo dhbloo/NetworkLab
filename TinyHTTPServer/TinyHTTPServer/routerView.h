@@ -11,9 +11,10 @@ class RouterView : public View {
 public:
     RouterView(const Router& router);
 
-    bool handle(Request& request, Response& response) override;
-    bool beforeRequest(Request& request, Response& response) override;
-    bool afterRequest(Request& request, Response& response) override;
+    void handle(Request& request, Response& response) override;
+
+    virtual void beforeRequest(Request& request, Response& response) {}
+    virtual void afterRequest(Request& request, Response& response) {}
 };
 
 #endif

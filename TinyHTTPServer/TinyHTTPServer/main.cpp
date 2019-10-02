@@ -5,7 +5,10 @@
 int main() {
 
     try {
-        HttpServer server(5000, std::cout);
+        Router router;
+        router.setRoute("/", nullptr, 1);
+
+        HttpServer server(5000, router, std::cout);
 
         server.run();
     }

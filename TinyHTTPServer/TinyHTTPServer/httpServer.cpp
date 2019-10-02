@@ -1,5 +1,6 @@
 #include "HttpServer.h"
 #include "request.h"
+#include "requestExcept.h"
 #include "response.h"
 
 #include <ws2tcpip.h>
@@ -11,8 +12,8 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-HttpServer::HttpServer(uint16_t port, std::ostream& ostream)
-    : port(port), logStream(ostream) {
+HttpServer::HttpServer(uint16_t port, const Router& router, std::ostream& ostream)
+    : port(port), router(router), logStream(ostream) {
     WSAData wsaData;
 
     // 初始化 Winsock
@@ -68,7 +69,7 @@ HttpServer::~HttpServer() {
 
 void HttpServer::handleConnection(Connection&& conn) {
     char recvbuf[MaxRequestBufferLength];
-    int bytesReceived, totalBytesReceived = 0, sendRet;
+    int bytesReceived, totalBytesReceived = 0;
 
     assert(conn.addr.sa_family == AF_INET);
     logStream << logLock.out << conn.ipv4_str() << " [Info]Connection accepted" << logLock.endl;
@@ -105,61 +106,72 @@ void HttpServer::handleConnection(Connection&& conn) {
         Request request;
         try {
             request = Request::parse(receivedDataBuffer);
-            logStream << logLock.out << conn.ipv4_str() << " [Info]Request(" << bytesReceived
-                << " bytes) " << request.methodStr << request.version.substr(4) << " "
-                << request.url << logLock.endl;
+            logStream << logLock.out << conn.ipv4_str() << " [Info]Request("
+                << bytesReceived << " bytes) " << request.methodStr
+                << request.version.substr(4) << " " << request.url << logLock.endl;
+
+            // 检验是否是不支持的HTTP方法
+            if (request.method == Request::UNSUPPORTED) {
+                throw Abort(501, "Unsupported method " + request.methodStr);
+            }
+
+            // 检验HTTP版本
+            if (request.version != "HTTP/1.0" && request.version != "HTTP/1.1") {
+                throw Abort(505, "Unsupport http version " + request.version);
+            }
+
+            // 检验Header中Content-Length是否与body长度对应
+            if (request.headers.find("Content-Length") != request.headers.end()) {
+                int contentLength = std::stoi(request.headers["Content-Length"]);
+                if (contentLength != request.body.length())
+                    logStream << logLock.out << conn.ipv4_str() << " [Warn]Incomplete body(expect "
+                    << contentLength << " bytes, actual " << request.body.length() << " bytes)"
+                    << logLock.endl;
+            }
+
+            ViewPtr view = router.resolve(request);
+            if (!view)
+                throw Abort(404, "Url not found " + request.url);
         }
-        catch (std::runtime_error e) {
-            logStream << logLock.out << conn.ipv4_str()
-                << " [Erro]Response(400 Bad Request): " << e.what() << logLock.endl;
-            response.statusCode = 400;
+        catch (Redirect r) {
+            response.statusCode = 302;
+            logStream << logLock.out << conn.ipv4_str() << " [Info]Response("
+                << response.statusCode << " " << response.statusInfo() << "): "
+                << r.what() << " Location = " << r.url << logLock.endl;
+
             break;
         }
+        catch (Abort a) {
+            response.statusCode = a.statusCode;
+            logStream << logLock.out << conn.ipv4_str() << " [Erro]Response("
+                << response.statusCode << " " << response.statusInfo() << "): "
+                << a.what() << logLock.endl;
 
-        // 检验是否是不支持的HTTP方法
-        if (request.method == Request::UNSUPPORTED) {
-            logStream << logLock.out << conn.ipv4_str()
-                << " [Erro]Response(501 Not Implemented): Unsupported method "
-                << request.methodStr << logLock.endl;
-            response.statusCode = 501;
             break;
         }
-
-        // 检验HTTP版本
-        if (request.version != "HTTP/1.0" && request.version != "HTTP/1.1") {
-            logStream << logLock.out << conn.ipv4_str()
-                << " [Erro]Response(505 Not Implemented): Unsupport http version "
-                << request.version << logLock.endl;
-            response.statusCode = 505;
-            break;
-        }
-
-
-        // 检验Header中Content-Length是否与body长度对应
-        if (request.headers.find("Content-Length") != request.headers.end()) {
-            int contentLength = std::stoi(request.headers["Content-Length"]);
-            if (contentLength != request.body.length())
-                logStream << logLock.out << conn.ipv4_str() << " [Warn]Incomplete body(expect "
-                << contentLength << " bytes, actual " << request.body.length() << " bytes)"
-                << logLock.endl;
-        }
-
 
 
     } while (bytesReceived > 0);
 
+    sendResponse(conn, response);
+}
+
+bool HttpServer::sendResponse(const Connection& conn, Response& response) {
     std::string responseStr = response.toString();
 
-    sendRet = send(conn.socket, responseStr.c_str(), responseStr.length(), 0);
+    int sendRet = send(conn.socket, responseStr.c_str(), responseStr.length(), 0);
     if (sendRet == SOCKET_ERROR) {
         logStream << logLock.out << conn.ipv4_str() << " [Erro]Send(" << responseStr.length()
             << " bytes) failed with error: " << WSAGetLastError() << ", closing connection"
             << logLock.endl;
+        return false;
     }
+    return true;
 }
 
 void HttpServer::run() {
     int nAddrLen = sizeof(sockaddr);
+    running.store(true, std::memory_order_relaxed);
     while (running.load(std::memory_order_relaxed)) {
         Connection conn;
         // 阻塞监听线程
@@ -175,7 +187,6 @@ void HttpServer::run() {
 }
 
 void HttpServer::start() {
-    running.store(true, std::memory_order_relaxed);
     std::thread listenThread(&HttpServer::run, this);
     listenThread.detach();
 }
@@ -194,7 +205,7 @@ Connection::Connection(Connection&& conn) {
     conn.socket = INVALID_SOCKET;
 }
 
-std::string Connection::ipv4_str() {
+std::string Connection::ipv4_str() const {
     char buf[17];
     inet_ntop(AF_INET, &addr, buf, sizeof(buf));
     return buf;

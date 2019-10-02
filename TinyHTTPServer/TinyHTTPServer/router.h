@@ -12,14 +12,23 @@ class View;
 using ViewPtr = std::shared_ptr<View>;
 
 class Router {
-    std::map<std::string, std::pair<ViewPtr, std::vector<std::string>>> urlMap;
-
 public:
+    struct Route {
+        std::string url, urlRegex;
+        int supportedMethods;
+        ViewPtr view;
+        std::vector<std::string> paramNames;
+    };
+
     Router();
 
-    void setRoute(std::string url, ViewPtr view);
+    void setRoute(std::string url, ViewPtr view, int supportedMethods);
     void removeRoute(std::string url);
-    ViewPtr resolve(Request& request);
+    const std::vector<Route>& getAllRoutes() const;
+    ViewPtr resolve(Request& request) const;
+
+private:
+    std::vector<Route> urlMap;
 };
 
 #endif

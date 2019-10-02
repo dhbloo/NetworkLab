@@ -6,7 +6,7 @@
 #include <map>
 
 struct Request {
-    enum Method { 
+    enum Method  { 
         GET = 1, 
         HEAD = 2, 
         POST = 4, 

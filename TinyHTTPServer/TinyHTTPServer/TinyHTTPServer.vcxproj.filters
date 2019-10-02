@@ -41,9 +41,6 @@
     <ClInclude Include="HttpServer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="syncLock.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -60,6 +57,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="routerView.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="requestExcept.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
