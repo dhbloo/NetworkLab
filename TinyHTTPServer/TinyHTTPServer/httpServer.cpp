@@ -73,7 +73,7 @@ void HttpServer::handleConnection(Connection&& conn) {
     char recvbuf[MaxRequestBufferLength];
     int bytesReceived, totalBytesReceived = 0;
 
-    assert(conn.addr.sa_family == AF_INET);
+    assert(conn.addr.sin_family == AF_INET);
     logStream << logLock.out << conn.ipv4_str() << " [Info]Connection accepted" << logLock.endl;
 
     Response response{ "HTTP/1.1", 200 };
@@ -198,12 +198,12 @@ bool HttpServer::sendResponse(const Connection& conn, Response& response) {
 }
 
 void HttpServer::run() {
-    int nAddrLen = sizeof(sockaddr);
+    int nAddrLen = sizeof(Connection::addr);
     running.store(true, std::memory_order_relaxed);
     while (running.load(std::memory_order_relaxed)) {
         Connection conn;
         // ×èÈû¼àÌýÏß³Ì
-        conn.socket = accept(listenSocket, &conn.addr, &nAddrLen);
+        conn.socket = accept(listenSocket, (sockaddr*)&conn.addr, &nAddrLen);
 
         if (conn.socket == INVALID_SOCKET) {
             throw std::runtime_error("Error at accept(): " + std::to_string(WSAGetLastError()));
@@ -236,5 +236,5 @@ Connection::Connection(Connection&& conn) {
 std::string Connection::ipv4_str() const {
     char buf[17];
     inet_ntop(AF_INET, &addr, buf, sizeof(buf));
-    return buf;
+    return buf + (":" + std::to_string(ntohs(addr.sin_port)));
 }

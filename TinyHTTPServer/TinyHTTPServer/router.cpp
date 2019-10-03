@@ -55,17 +55,19 @@ void Router::removeErrorHandler(int statusCode) {
 }
 
 ViewPtr Router::resolve(Request& request, Response& response) const {
+    bool routeFinded = false;
+    int routeSupportedMethods;
+
     for (auto r = urlMap.cbegin(); r != urlMap.cend(); r++) {
         std::regex urlRe(r->urlRegex);
         std::smatch match;
         if (std::regex_match(request.url, match, urlRe)) {
             if (!(request.method & r->supportedMethods)) {
-                std::string allowed = getAllowedString(r->supportedMethods);
-                if (!allowed.empty())
-                    response.headers["Allow"] = allowed;
-
-                throw Abort(405, "Method " + request.method +
-                    std::string(" not allowed for ") + request.url);
+                if (!routeFinded) {
+                    routeFinded = true;
+                    routeSupportedMethods = r->supportedMethods;
+                }
+                continue;
             }
 
             for (int i = 1; i < match.size(); i++) {
@@ -73,6 +75,15 @@ ViewPtr Router::resolve(Request& request, Response& response) const {
             }
             return r->view;
         }
+    }
+
+    if (routeFinded) {
+        std::string allowed = getAllowedString(routeSupportedMethods);
+        if (!allowed.empty())
+            response.headers["Allow"] = allowed;
+
+        throw Abort(405, "Method " + getAllowedString(request.method) +
+            std::string(" not allowed for ") + request.url);
     }
 
     throw Abort(404, "Url not found " + request.url);

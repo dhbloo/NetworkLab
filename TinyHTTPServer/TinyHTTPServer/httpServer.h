@@ -13,7 +13,7 @@
 
 struct Connection {
     SOCKET socket;
-    sockaddr addr;
+    sockaddr_in addr;
 
     ~Connection();
     Connection() : socket(INVALID_SOCKET) {}
