@@ -98,9 +98,6 @@ void HttpServer::handleConnection(Connection&& conn) {
 
         //} while (recv(conn.socket, recvbuf, sizeof(recvbuf) - 1, MSG_PEEK) > 0);
 
-        logStream << logLock.out << conn.ipv4_str() << " [Info]Received "
-            << bytesReceived << " bytes" << logLock.endl;
-
         Request request;
         try {
             // 在响应中加入通用响应Headers(Server, Date, Connection)

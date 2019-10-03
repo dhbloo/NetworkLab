@@ -9,7 +9,7 @@ int main() {
     try {
         Router router;
         ViewPtr sfv = std::make_shared<StaticFileView>(R"(C:\Users\dhb\Desktop\test)");
-        router.setRoute("/", Request::GET, sfv);
+        //router.setRoute("/", Request::GET, sfv);
         router.setRoute("/<path:filepath>", Request::GET, sfv);
         router.setErrorHandler(404, nullptr);
 

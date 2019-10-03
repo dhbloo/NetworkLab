@@ -2,6 +2,7 @@
 #include "request.h"
 #include "response.h"
 #include "requestExcept.h"
+#include "util.h"
 #include <fstream>
 #include <filesystem>
 #include <map>
@@ -45,7 +46,9 @@ void StaticFileView::handle(Request& request, Response& response) {
     if (dirKV != request.urlParams.end())
         urlFilePath = dirKV->second;
 
-    fs::path filePath = directory + urlFilePath;
+    urlFilePath = UrlDecode(urlFilePath);
+
+    fs::path filePath = fs::u8path(directory + urlFilePath);
     bool isDir = fs::is_directory(filePath);
     bool hasExt = filePath.has_extension();
 

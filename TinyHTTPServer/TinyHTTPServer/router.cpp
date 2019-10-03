@@ -14,7 +14,7 @@ void Router::setRoute(std::string url, int supportedMethods, ViewPtr view) {
 
     std::string urlRe(
         std::regex_replace(
-            std::regex_replace(url, urlParamPathRe, "(\\S+)")
+            std::regex_replace(url, urlParamPathRe, "(\\S*)")
             , urlParamRe, "([^/]+)")
     );
 

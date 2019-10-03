@@ -1,6 +1,5 @@
 #include "request.h"
 #include "requestExcept.h"
-#include "util.h"
 #include <vector>
 #include <map>
 #include <sstream>
@@ -31,7 +30,6 @@ Request Request::parse(std::stringstream& ss) {
 
     // 解析请求行
     ss >> request.methodStr >> request.url >> request.version;
-    //request.url = UrlDecode(request.url);
 
     // 解析HTTP方法
     auto methodIt = MethodMap.find(request.methodStr);

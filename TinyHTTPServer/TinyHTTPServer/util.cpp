@@ -34,7 +34,7 @@ unsigned char FromHex(unsigned char x) {
     if (x >= 'A' && x <= 'Z') y = x - 'A' + 10;
     else if (x >= 'a' && x <= 'z') y = x - 'a' + 10;
     else if (x >= '0' && x <= '9') y = x - '0';
-    else assert(0);
+    else { assert(0); y = 0; }
     return y;
 }
 
