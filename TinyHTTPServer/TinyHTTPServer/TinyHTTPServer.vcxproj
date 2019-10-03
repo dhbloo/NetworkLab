@@ -137,6 +137,7 @@
     <ClCompile Include="view.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="funcView.h" />
     <ClInclude Include="requestExcept.h" />
     <ClInclude Include="httpServer.h" />
     <ClInclude Include="request.h" />

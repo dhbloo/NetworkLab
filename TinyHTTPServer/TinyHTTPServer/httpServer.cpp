@@ -161,9 +161,9 @@ void HttpServer::handleConnection(Connection&& conn) {
                 << response.statusCode << " " << response.statusInfo() << "): "
                 << a.what() << logLock.endl;
 
-            // 在Router中寻找是否有错误处理View
+            // 在Router中寻找是否有局部/全局错误处理View
             ViewPtr errorView = router.getErrorHandler(response.statusCode);
-            if (errorView)
+            if (errorView || (errorView = router.getErrorHandler(0)))
                 errorView->handle(request, response);
             else
                 response.body = "";
