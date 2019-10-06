@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TinyHTTPServer", "TinyHTTPServer\TinyHTTPServer.vcxproj", "{F5EB344F-EBE2-4F88-B469-37E21BB25B3A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TinyHTTPServerGUI", "TinyHTTPServerGUI\TinyHTTPServerGUI.vcxproj", "{B893AC69-641F-46F9-9777-DF4FA6027F2F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{F5EB344F-EBE2-4F88-B469-37E21BB25B3A}.Release|x64.Build.0 = Release|x64
 		{F5EB344F-EBE2-4F88-B469-37E21BB25B3A}.Release|x86.ActiveCfg = Release|Win32
 		{F5EB344F-EBE2-4F88-B469-37E21BB25B3A}.Release|x86.Build.0 = Release|Win32
+		{B893AC69-641F-46F9-9777-DF4FA6027F2F}.Debug|x64.ActiveCfg = Debug|x64
+		{B893AC69-641F-46F9-9777-DF4FA6027F2F}.Debug|x64.Build.0 = Debug|x64
+		{B893AC69-641F-46F9-9777-DF4FA6027F2F}.Debug|x86.ActiveCfg = Debug|Win32
+		{B893AC69-641F-46F9-9777-DF4FA6027F2F}.Debug|x86.Build.0 = Debug|Win32
+		{B893AC69-641F-46F9-9777-DF4FA6027F2F}.Release|x64.ActiveCfg = Release|x64
+		{B893AC69-641F-46F9-9777-DF4FA6027F2F}.Release|x64.Build.0 = Release|x64
+		{B893AC69-641F-46F9-9777-DF4FA6027F2F}.Release|x86.ActiveCfg = Release|Win32
+		{B893AC69-641F-46F9-9777-DF4FA6027F2F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
