@@ -5,11 +5,13 @@
 #include "view.h"
 #include <string>
 
+// 静态文件View
+// 将URL解析为静态文件访问
 class StaticFileView : public View {
-    std::string directory;
+    std::string directory;  // 访问目录在本地的路径
 
 public:
-    static std::string DefaultExt;
+    static std::string DefaultExt;  // 默认扩展名
 
     StaticFileView(std::string path);
 

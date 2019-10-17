@@ -10,6 +10,7 @@
 #include <ostream>
 #include <winsock2.h>
 
+class Response;
 
 struct Connection {
     SOCKET socket;
@@ -21,8 +22,6 @@ struct Connection {
     std::string ipv4_str() const;
 };
 
-
-class Response;
 
 class HttpServer {
     SOCKET listenSocket;

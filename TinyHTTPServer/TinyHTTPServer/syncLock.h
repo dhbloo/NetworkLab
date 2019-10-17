@@ -5,6 +5,7 @@
 #include <ostream>
 #include <mutex>
 
+// IOÍ¬²½Ëø
 class SyncLock {
     std::mutex lock;
 public:

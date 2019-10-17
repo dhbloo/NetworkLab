@@ -6,6 +6,8 @@
 #include "request.h"
 #include "response.h"
 
+// 函数View
+// 以任意的lambda函数处理请求
 template <typename Func>
 class FuncView : public View {
     Func func;

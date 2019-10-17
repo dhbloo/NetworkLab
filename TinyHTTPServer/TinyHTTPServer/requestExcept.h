@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 
+// 通用错误码响应异常
 class Abort : public std::logic_error {
 public:
     int statusCode;
@@ -15,7 +16,7 @@ public:
         : std::logic_error(message), statusCode(code) {}
 };
 
-
+// 重定向响应异常
 class Redirect : public std::logic_error {
 public:
     std::string url;

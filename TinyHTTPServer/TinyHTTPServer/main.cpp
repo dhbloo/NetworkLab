@@ -31,6 +31,7 @@ int main() {
                 res.body = R"(<h1 style="text-align:center;">)"
                     + std::to_string(res.statusCode) + " "
                     + res.statusInfo() + "!</h1>";
+                res.headers["Content-Type"] = "text/html;";
             }));
 
         HttpServer server(5000, router, std::cout);

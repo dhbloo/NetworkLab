@@ -12,6 +12,8 @@ class Response;
 class View;
 using ViewPtr = std::shared_ptr<View>;
 
+
+// Router 负责将URL解析到对应的View,并在出错时找到并调用errorHandler
 class Router {
 public:
     struct Route {
