@@ -39,8 +39,10 @@ public:
     static const int MaxRequestBufferLength = 8192;
     std::string serverName = "TinyHttpServer/0.1 (Windows)";
 
-    HttpServer(uint16_t port, const Router& router, std::ostream& ostream);
+    HttpServer(const char* ip, uint16_t port, const Router& router, std::ostream& ostream);
     ~HttpServer();
+
+    bool isRunning() { return running.load(std::memory_order_relaxed); }
 
     void run();
     void start();

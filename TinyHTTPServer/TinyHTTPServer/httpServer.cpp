@@ -14,7 +14,12 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-HttpServer::HttpServer(uint16_t port, const Router& router, std::ostream& ostream)
+HttpServer::HttpServer(
+    const char* ip, 
+    uint16_t port, 
+    const Router& router, 
+    std::ostream& ostream
+)
     : port(port), router(router), logStream(ostream) {
     WSAData wsaData;
 
@@ -31,7 +36,7 @@ HttpServer::HttpServer(uint16_t port, const Router& router, std::ostream& ostrea
     hints.ai_flags = AI_PASSIVE;
 
     // Resolve the server address and port
-    if (int ret = getaddrinfo(nullptr, std::to_string(port).c_str(), &hints, &result)) {
+    if (int ret = getaddrinfo(ip, std::to_string(port).c_str(), &hints, &result)) {
         WSACleanup();
         throw std::runtime_error("Getaddrinfo failed with error: " + std::to_string(ret));
     }

@@ -25,7 +25,7 @@ int main() {
                 }
             }));
         router.setRoute("/<path:filepath>", Request::GET,
-            std::make_shared<StaticFileView>(R"(C:\Users\dhb\Desktop\test)"));
+            std::make_shared<StaticFileView>(R"(C:\Users\dhb\Desktop\TestWeb)"));
         router.setErrorHandler(0, MakeFuncView(
             [](auto& req, auto& res) {
                 res.body = R"(<h1 style="text-align:center;">)"
@@ -34,7 +34,7 @@ int main() {
                 res.headers["Content-Type"] = "text/html;";
             }));
 
-        HttpServer server(5000, router, std::cout);
+        HttpServer server(nullptr, 5000, router, std::cout);
 
         server.run();
     }
