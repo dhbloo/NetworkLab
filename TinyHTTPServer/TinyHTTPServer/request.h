@@ -31,7 +31,7 @@ struct Request {
     std::string body;
 
 
-    std::string getHeader(std::string key);
+    std::string lowerHeader(std::string key);
 
 
     static Request parse(std::stringstream& ss);

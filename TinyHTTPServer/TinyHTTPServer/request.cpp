@@ -1,5 +1,6 @@
 #include "request.h"
 #include "requestExcept.h"
+#include "util.h"
 #include <vector>
 #include <map>
 #include <sstream>
@@ -20,9 +21,9 @@ static const std::vector<std::string> UnImpMethods = {
     "UNLINK"
 };
 
-std::string Request::getHeader(std::string key) {
+std::string Request::lowerHeader(std::string key) {
     auto it = headers.find(key);
-    return it != headers.end() ? it->second : "";
+    return it != headers.end() ? ToLower(it->second) : "";
 }
 
 Request Request::parse(std::stringstream& ss) {

@@ -1,4 +1,5 @@
 #include "util.h"
+#include <algorithm>
 #include <ctime>
 #include <cassert>
 
@@ -73,4 +74,22 @@ std::string UrlDecode(const std::string& str) {
         else strTemp += str[i];
     }
     return strTemp;
+}
+
+std::string& ToLower(std::string& str) {
+    std::transform(
+        str.begin(), 
+        str.end(), 
+        str.begin(),
+        [](unsigned char c) -> unsigned char { return std::tolower(c); });
+    return str;
+}
+
+std::string& ToUpper(std::string& str) {
+    std::transform(
+        str.begin(),
+        str.end(),
+        str.begin(),
+        [](unsigned char c) -> unsigned char { return std::toupper(c); });
+    return str;
 }

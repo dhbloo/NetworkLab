@@ -1,7 +1,5 @@
 #include "HttpServer.h"
-#include "request.h"
 #include "requestExcept.h"
-#include "response.h"
 #include "view.h"
 #include "util.h"
 
@@ -9,18 +7,17 @@
 #include <stdexcept>
 #include <thread>
 #include <string>
-#include <sstream>
 #include <cassert>
 
 #pragma comment(lib, "Ws2_32.lib")
 
 HttpServer::HttpServer(
-    const char* ip, 
+    const char* host,
     uint16_t port, 
     const Router& router, 
     std::ostream& ostream
 )
-    : port(port), router(router), logStream(ostream) {
+    : router(router), logStream(ostream) {
     WSAData wsaData;
 
     // 初始化 Winsock
@@ -36,7 +33,8 @@ HttpServer::HttpServer(
     hints.ai_flags = AI_PASSIVE;
 
     // Resolve the server address and port
-    if (int ret = getaddrinfo(ip, std::to_string(port).c_str(), &hints, &result)) {
+    if (int ret = getaddrinfo(host, std::to_string(port).c_str(), &hints, &result)
+        || result->ai_family != AF_INET) {
         WSACleanup();
         throw std::runtime_error("Getaddrinfo failed with error: " + std::to_string(ret));
     }
@@ -57,6 +55,7 @@ HttpServer::HttpServer(
         throw std::runtime_error("Bind failed with error: " + std::to_string(WSAGetLastError()));
     }
 
+    listenConn.addr = *(sockaddr_in*)result->ai_addr;
     freeaddrinfo(result);
 
     // 开始监听
@@ -65,27 +64,46 @@ HttpServer::HttpServer(
         WSACleanup();
         throw std::runtime_error("Listen failed with error: " + std::to_string(WSAGetLastError()));
     }
-
-    logStream << logLock.out << "HTTP Server started on port " << port << logLock.endl;
+    
+    logStream << logLock.out << listenConn.ipv4_str() << " [Info]HTTP Server started" << logLock.endl;
 }
 
 HttpServer::~HttpServer() {
+    logStream << logLock.out << listenConn.ipv4_str() << " [Info]Stopping HTTP Server..." << logLock.endl;
+
+    // 确认run函数没在运行
+    if (isRunning()) stop();
+
+    // 关闭监听socket
     closesocket(listenSocket);
     WSACleanup();
+
+    // 等待所有工作线程退出
+    while (clientList.size()) {
+        std::this_thread::yield();
+    }
+
+    logStream << logLock.out << listenConn.ipv4_str() << " [Info]HTTP Server stopped" << logLock.endl;
 }
 
 void HttpServer::handleConnection(Connection&& conn) {
+    ClientInfo client{ conn, {}, { "HTTP/1.1", 200 }, std::stringstream(), 0, 0 };
     char recvbuf[MaxRequestBufferLength];
-    int bytesReceived, totalBytesReceived = 0;
+
+    // 将本连接的socket加入列表
+    {
+        std::lock_guard<std::mutex> guard(clientListMtx);
+        clientList.push_back(&client);
+    }
 
     assert(conn.addr.sin_family == AF_INET);
     logStream << logLock.out << conn.ipv4_str() << " [Info]Connection accepted" << logLock.endl;
 
-    Response response{ "HTTP/1.1", 200 };
+    Response &response = client.response;
+    int& bytesReceived = client.bytesReceived;
+    bool keepAlive = true;
     do {
-        std::stringstream receivedDataBuffer;
-        // 读取缓冲区数据直到没有数据输入
-        //do {
+        // 读取缓冲区数据
         bytesReceived = recv(conn.socket, recvbuf, sizeof(recvbuf) - 1, 0);
 
         if (bytesReceived == 0)
@@ -93,27 +111,18 @@ void HttpServer::handleConnection(Connection&& conn) {
         else if (bytesReceived < 0) {
             logStream << logLock.out << conn.ipv4_str() << " [Erro]Recv failed with error: "
                 << WSAGetLastError() << ", closing connection" << logLock.endl;
-            return;
+            break;
         }
 
         assert(bytesReceived <= sizeof(recvbuf));
         recvbuf[bytesReceived] = '\0';
-        receivedDataBuffer << recvbuf;
-        totalBytesReceived += bytesReceived;
+        client.receivedDataBuffer << recvbuf;
+        client.totalBytesReceived += bytesReceived;
 
-        //} while (recv(conn.socket, recvbuf, sizeof(recvbuf) - 1, MSG_PEEK) > 0);
-
-        Request request;
+        Request &request = client.request;
         try {
-            // 在响应中加入通用响应Headers(Server, Date, Connection)
-            response.headers["Server"] = serverName;
-            response.headers["Date"] = Rfc1123DateTimeNow();
-            if (   request.version == "HTTP/1.1" && request.getHeader("Connection") == "Close"
-                || request.version == "HTTP/1.0" && request.getHeader("Connection") != "Keep-Alive")
-                response.headers["Connection"] = "close";
-
             // 从接受数据中解析Request
-            request = Request::parse(receivedDataBuffer);
+            request = Request::parse(client.receivedDataBuffer);
             logStream << logLock.out << conn.ipv4_str() << " [Info]Request("
                 << bytesReceived << " bytes) " << request.methodStr
                 << request.version.substr(4) << " " << request.url << logLock.endl;
@@ -137,16 +146,13 @@ void HttpServer::handleConnection(Connection&& conn) {
                     << logLock.endl;
             }
 
+            // 检验是否为持久链接
+            keepAlive = !(
+                request.version == "HTTP/1.1" && request.lowerHeader("Connection") == "close" ||
+                request.version == "HTTP/1.0" && request.lowerHeader("Connection") != "keep-alive");
+
             // 根据Router中的配置获得View, 没有找到则丢出404/405错误
             router.resolve(request, response)->handle(request, response);
-
-            // 给响应加入实体Headers(Encoding, Length, MD5)
-            if (response.headers.find("Content-Encoding") == response.headers.end()) {
-                response.headers["Content-Encoding"] = "identity";
-                response.headers["Content-Length"] = std::to_string(response.body.length());
-            }
-            // TODO: MD5
-
         }
         // 处理请求重定向异常
         catch (Redirect r) {
@@ -160,8 +166,6 @@ void HttpServer::handleConnection(Connection&& conn) {
         // 处理请求终止异常
         catch (Abort a) {
             response.statusCode = a.statusCode;
-            // 默认情况下终止连接
-            response.headers["Connection"] = "close";
             logStream << logLock.out << conn.ipv4_str() << " [Erro]Response("
                 << response.statusCode << " " << response.statusInfo() << "): "
                 << a.what() << logLock.endl;
@@ -174,58 +178,102 @@ void HttpServer::handleConnection(Connection&& conn) {
                 response.body = "";
         }
 
+        // 在响应中加入通用响应Headers(Server, Date, Connection)
+        response.headers["Server"] = serverName;
+        response.headers["Date"] = Rfc1123DateTimeNow();
+
+        // 如果不是持久连接,在响应头中指出断开连接
+        if (!keepAlive)
+            response.headers["Connection"] = "close";
+
+        // 给响应加入实体Headers(Encoding, Length, MD5)
+        if (response.headers.find("Content-Length") == response.headers.end()) {
+            response.headers["Content-Encoding"] = "identity";
+            response.headers["Content-Length"] = std::to_string(response.body.length());
+        }
+        // TODO: MD5
+
         // 发送响应
-        if (!sendResponse(conn, response))
-            return;
+        if (!sendResponse(client))
+            break;
 
         // 检验是否为持久链接
-        auto connHeaderIt = response.headers.find("Connection");
-        if (connHeaderIt != response.headers.end() &&
-            connHeaderIt->second == "close")
+        if (!keepAlive)
             break;
 
     } while (bytesReceived > 0);
 
     logStream << logLock.out << conn.ipv4_str() << " [Info]Connection closed" << logLock.endl;
+
+    // 将本连接的socket从列表中除去
+    {
+        std::lock_guard<std::mutex> guard(clientListMtx);
+        clientList.erase(std::find(clientList.begin(), clientList.end(), &client));
+    }
 }
 
-bool HttpServer::sendResponse(const Connection& conn, Response& response) {
-    std::string responseStr = response.toString();
+bool HttpServer::sendResponse(ClientInfo& client) {
+    std::string responseStr = client.response.toString();
+    client.bytesSent = responseStr.size();
+    client.totalBytesSent += client.bytesSent;
 
-    int sendRet = send(conn.socket, responseStr.c_str(), responseStr.size() + 1, 0);
+    int sendRet = send(client.conn.socket, responseStr.c_str(), responseStr.size(), 0);
     if (sendRet == SOCKET_ERROR) {
-        logStream << logLock.out << conn.ipv4_str() << " [Erro]Send(" << responseStr.length()
-            << " bytes) failed with error: " << WSAGetLastError() << ", closing connection"
-            << logLock.endl;
+        logStream << logLock.out << client.conn.ipv4_str() << " [Erro]Send("
+            << responseStr.length() << " bytes) failed with error: " << WSAGetLastError()
+            << ", closing connection" << logLock.endl;
         return false;
     }
     return true;
 }
 
 void HttpServer::run() {
-    int nAddrLen = sizeof(Connection::addr);
+    std::lock_guard<std::mutex> guard(runningMtx);
     running.store(true, std::memory_order_relaxed);
+
+    int nAddrLen = sizeof(Connection::addr);
+    fd_set fdmaster, fdworking;
+    FD_ZERO(&fdmaster);
+    FD_SET(listenSocket, &fdmaster);
+    const timeval tv = { 
+        SelectListenIntervalMS / 1000, 
+        1000 * (SelectListenIntervalMS % 1000) 
+    };
+
     while (running.load(std::memory_order_relaxed)) {
-        Connection conn;
-        // 阻塞监听线程
-        conn.socket = accept(listenSocket, (sockaddr*)&conn.addr, &nAddrLen);
+        std::copy(&fdmaster, &fdmaster + 1, &fdworking);
 
-        if (conn.socket == INVALID_SOCKET) {
-            throw std::runtime_error("Error at accept(): " + std::to_string(WSAGetLastError()));
+        int ret = select(0, &fdworking, nullptr, nullptr, &tv);
+        if (ret > 0) {
+            Connection conn;
+            // 阻塞监听线程
+            conn.socket = accept(listenSocket, (sockaddr*)&conn.addr, &nAddrLen);
+
+            if (conn.socket == INVALID_SOCKET) {
+                throw std::runtime_error("Error at accept(): " + std::to_string(WSAGetLastError()));
+            }
+
+            std::thread newThread(&HttpServer::handleConnection, this, std::move(conn));
+            newThread.detach();
         }
-
-        std::thread newThread(&HttpServer::handleConnection, this, std::move(conn));
-        newThread.detach();
+        else if (ret < 0) {
+            throw std::runtime_error("Error at select(): " + std::to_string(WSAGetLastError()));
+        }
     }
 }
 
 void HttpServer::start() {
+    if (isRunning()) 
+        return;
+
+    std::lock_guard<std::mutex> guard(runningMtx);
     std::thread listenThread(&HttpServer::run, this);
     listenThread.detach();
 }
 
 void HttpServer::stop() {
     running.store(false, std::memory_order_relaxed);
+    std::lock_guard<std::mutex> guard(runningMtx);
 }
 
 Connection::~Connection() {
@@ -238,8 +286,8 @@ Connection::Connection(Connection&& conn) {
     conn.socket = INVALID_SOCKET;
 }
 
-std::string Connection::ipv4_str() const {
+std::string Connection::ip_addr() const {
     char buf[17];
-    inet_ntop(AF_INET, &addr, buf, sizeof(buf));
-    return buf + (":" + std::to_string(ntohs(addr.sin_port)));
+    inet_ntop(AF_INET, &addr.sin_addr, buf, sizeof(buf));
+    return buf;
 }
