@@ -43,13 +43,16 @@ MainFrame::MainFrame() :
     page->SetSizerAndFit(lineSizer = new wxBoxSizer(wxVERTICAL));
     lineSizer->Add(connList = new wxListView(page, wxID_ANY), 1, wxALL | wxEXPAND, 8);
     connList->AppendColumn("地址");
-    connList->AppendColumn("端口号");
+    connList->AppendColumn("端口号", wxLIST_FORMAT_LEFT, 50);
     connList->AppendColumn("请求字节数");
     connList->AppendColumn("HTTP版本");
     connList->AppendColumn("方法");
     connList->AppendColumn("URL");
     connList->AppendColumn("状态码");
     connList->AppendColumn("响应字节数");
+
+    tabView->AddPage(page = new wxPanel(tabView, wxID_ANY), "路由");
+    page->SetSizerAndFit(lineSizer = new wxBoxSizer(wxVERTICAL));
 
     redirect = std::make_unique<wxStreamToTextRedirector>(logText);
 }
@@ -103,16 +106,20 @@ void MainFrame::OnRefreshList(wxCommandEvent& event) {
     if (App::GlobalHttpServer) {
         auto clients = App::GlobalHttpServer->getCurrentClients();
         for (auto& client : clients) {
+            using std::to_string;
+
             long itemIdx = connList->InsertItem(0, client->conn.ip_addr());
-            connList->SetItem(itemIdx, 1, std::to_string(client->conn.port()));
+            connList->SetItem(itemIdx, 1, to_string(client->conn.port()));
             if (client->totalBytesReceived == 0)
                 continue;
-            connList->SetItem(itemIdx, 2, std::to_string(client->totalBytesReceived));
+
+            connList->SetItem(itemIdx, 2, to_string(client->totalBytesReceived));
             connList->SetItem(itemIdx, 3, client->request.version);
             connList->SetItem(itemIdx, 4, client->request.methodStr);
             connList->SetItem(itemIdx, 5, client->request.url);
-            connList->SetItem(itemIdx, 6, std::to_string(client->response.statusCode));
-            connList->SetItem(itemIdx, 7, std::to_string(client->totalBytesSent));
+            connList->SetItem(itemIdx, 6, to_string(client->response.statusCode)
+                + " " + client->response.statusInfo());
+            connList->SetItem(itemIdx, 7, to_string(client->totalBytesSent));
         }
     }
 }
