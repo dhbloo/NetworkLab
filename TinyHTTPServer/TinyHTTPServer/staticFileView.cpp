@@ -37,7 +37,7 @@ namespace fs = std::filesystem;
 std::string StaticFileView::DefaultExt = ".html";
 
 StaticFileView::StaticFileView(std::string path) : directory(path) {
-    if (directory.back() != '/')
+    if (directory.empty() || directory.back() != '/')
         directory.append("/");
 }
 

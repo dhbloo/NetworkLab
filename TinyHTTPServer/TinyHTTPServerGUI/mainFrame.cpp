@@ -5,9 +5,8 @@
 #include <TinyHTTPServer/httpServer.h>
 
 MainFrame::MainFrame() : 
-    wxFrame(NULL, wxID_ANY, "Http 服务器", wxDefaultPosition, wxSize(680, 500)) {
-
-    CreateStatusBar(2);
+    wxFrame(NULL, wxID_ANY, "Http 服务器", wxDefaultPosition, wxSize(870, 500)) {
+    CenterOnScreen();
 
     wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
@@ -46,6 +45,7 @@ MainFrame::MainFrame() :
     connList->AppendColumn("URL");
     connList->AppendColumn("状态码");
     connList->AppendColumn("响应字节数");
+    connList->AppendColumn("最近响应时间", wxLIST_FORMAT_LEFT, 200);
 
     tabView->AddPage(page = new wxPanel(tabView, wxID_ANY), "路由");
     page->SetSizerAndFit(lineSizer = new wxBoxSizer(wxVERTICAL));
@@ -78,7 +78,6 @@ void MainFrame::OnStart(wxCommandEvent& event) {
                 );
 
             App::GlobalHttpServer->start();
-            SetStatusText(App::GlobalHttpServer->ipAddress());
 
             routerTree->enable(false);
             startBtn->SetLabelText("停止");
@@ -123,6 +122,9 @@ void MainFrame::OnRefreshList(wxCommandEvent& event) {
                 connList->SetItem(itemIdx, 6, to_string(client->response.statusCode)
                     + " " + client->response.statusInfo());
             connList->SetItem(itemIdx, 7, to_string(client->totalBytesSent));
+            try {
+                connList->SetItem(itemIdx, 8, client->response.headers.at("Date"));
+            } catch (...) {}
         }
     }
 }

@@ -5,6 +5,7 @@
 #include <string>
 
 std::string Rfc1123DateTimeNow();
+std::string TimeNow();
 
 std::string UrlEncode(const std::string& str);
 std::string UrlDecode(const std::string& str);

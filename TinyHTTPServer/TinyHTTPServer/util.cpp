@@ -25,6 +25,19 @@ std::string Rfc1123DateTimeNow() {
     return buf;
 }
 
+std::string TimeNow() {
+    const int TIME_LEN = 9;
+    char buf[TIME_LEN];
+    time_t t;
+    ::tm tm;
+
+    time(&t);
+    localtime_s(&tm, &t);
+    strftime(buf, TIME_LEN, "%H:%M:%S", &tm);
+
+    return buf;
+}
+
 
 unsigned char ToHex(unsigned char x) {
     return  x > 9 ? x + 55 : x + 48;

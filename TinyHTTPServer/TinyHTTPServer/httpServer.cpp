@@ -76,6 +76,14 @@ HttpServer::~HttpServer() {
 
     // 关闭监听socket
     closesocket(listenSocket);
+
+    // 关闭所有已经打开的socket
+    {
+        std::lock_guard<std::mutex> guard(clientListMtx);
+        for (auto c : clientList)
+            closesocket(c->conn.socket);
+    }
+
     WSACleanup();
 
     // 等待所有工作线程退出
@@ -157,6 +165,10 @@ void HttpServer::handleConnection(Connection&& conn) {
 
             // 根据Router中的配置获得View, 没有找到则丢出404/405错误
             router.resolve(request, response)->handle(request, response);
+
+            logStream << logLock.out << conn.ipv4_str() << " [Info]Response("
+                << response.statusCode << " " << response.statusInfo() << "): "
+                << response.body.length() << " bytes" << logLock.endl;
         }
         // 处理请求重定向异常
         catch (Redirect r) {

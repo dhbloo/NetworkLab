@@ -4,6 +4,7 @@
 
 #include <ostream>
 #include <mutex>
+#include "util.h"
 
 // IOÍ¬²½Ëø
 class SyncLock {
@@ -16,7 +17,7 @@ public:
 
 inline std::ostream& operator<<(std::ostream& os, SyncLock::out_t lock) {
     lock.mtx.lock();
-    return os;
+    return os << TimeNow() << " | ";
 }
 
 inline std::ostream& operator<<(std::ostream& os, SyncLock::endl_t lock) {
