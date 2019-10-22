@@ -182,16 +182,33 @@ void HttpServer::handleConnection(Connection&& conn) {
         // 处理请求终止异常
         catch (Abort a) {
             response.statusCode = a.statusCode;
-            logStream << logLock.out << conn.ipv4_str() << " [Erro]Response("
-                << response.statusCode << " " << response.statusInfo() << "): "
-                << a.what() << logLock.endl;
+            try {
+                // 在Router中寻找是否有局部/全局错误处理View
+                ViewPtr errorView = router.getErrorHandler(response.statusCode);
+                if (errorView || (errorView = router.getErrorHandler(0)))
+                    errorView->handle(request, response);
+                else
+                    response.body = "";
 
-            // 在Router中寻找是否有局部/全局错误处理View
-            ViewPtr errorView = router.getErrorHandler(response.statusCode);
-            if (errorView || (errorView = router.getErrorHandler(0)))
-                errorView->handle(request, response);
-            else
+                logStream << logLock.out << conn.ipv4_str() << " [Erro]Response("
+                    << response.statusCode << " " << response.statusInfo() << "): "
+                    << a.what() << logLock.endl;
+            }
+            catch (Redirect r) {
+                response.statusCode = 302;
+                response.headers["Location"] = r.url;
+
+                logStream << logLock.out << conn.ipv4_str() << " [Erro]Response("
+                    << response.statusCode << " " << response.statusInfo() << "): "
+                    << r.what() << " Location = " << r.url << logLock.endl;
+            }
+            catch (Abort a) {
                 response.body = "";
+
+                logStream << logLock.out << conn.ipv4_str() << " [Erro]Response("
+                    << response.statusCode << " " << response.statusInfo() << "): "
+                    << " Abort in error handler!" << logLock.endl;
+            }
         }
 
         // 在响应中加入通用响应Headers(Server, Date, Connection)

@@ -1,4 +1,5 @@
 #include "routerViewPanel.h"
+#include "errorViewPanel.h"
 #include "TinyHTTPServer/router.h"
 #include "TinyHTTPServer/routerView.h"
 #include "TinyHTTPServer/request.h"
@@ -25,7 +26,15 @@ std::unique_ptr<Router> RouterViewPanel::makeRouter() const {
          p.IsOk(); 
          p = tree->GetNextChild(id, cookie)) {
         ViewPanel* vp = (ViewPanel*)tree->GetItemData(p);
-        router->setRoute(vp->url, vp->getSupportedMethod(), vp->getView());
+        if (vp->url.substr(0, 14) == "[errorhandler]") {
+            ErrorViewPanel* evp = (ErrorViewPanel*)vp;
+            unsigned long statucCode;
+            if (evp->statusCode->GetValue().ToULong(&statucCode))
+                router->setErrorHandler(statucCode, evp->getView());
+        }
+        else {
+            router->setRoute(vp->url, vp->getSupportedMethod(), vp->getView());
+        }
     }
 
     return std::move(router);

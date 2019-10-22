@@ -21,13 +21,15 @@ void RouterView::handle(Request& request, Response& response) {
 
     ViewPtr viewPtr = router.resolve(subRequest, response);
     try {
-        viewPtr->handle(request, response);
+        viewPtr->handle(subRequest, response);
     }
     catch (Abort a) {
         response.statusCode = a.statusCode;
 
-        if (ViewPtr errorView = router.getErrorHandler(a.statusCode))
-            errorView->handle(request, response);
+        // 在Router中寻找是否有局部/全局错误处理View
+        ViewPtr errorView = router.getErrorHandler(response.statusCode);
+        if (errorView || (errorView = router.getErrorHandler(0)))
+            errorView->handle(subRequest, response);
         else
             throw;
     }

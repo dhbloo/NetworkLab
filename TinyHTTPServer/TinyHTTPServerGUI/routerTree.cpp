@@ -1,7 +1,9 @@
 #include "routerTree.h"
 #include "staticFileViewPanel.h"
 #include "routerViewPanel.h"
+#include "errorViewPanel.h"
 #include "TinyHTTPServer/router.h"
+
 
 RouterTree::RouterTree(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
     
@@ -14,7 +16,8 @@ RouterTree::RouterTree(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
     sizer->Add(view = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
         wxTAB_TRAVERSAL | wxBORDER_SIMPLE), 1, wxEXPAND);
 
-    hsizer->Add(new wxStaticText(this, wxID_ANY, "URL: "), 0, wxALIGN_CENTER_VERTICAL | wxDOWN | wxUP, 5);
+    hsizer->Add(new wxStaticText(this, wxID_ANY, "局部URL: "), 
+        0, wxALIGN_CENTER_VERTICAL | wxDOWN | wxUP, 5);
     hsizer->Add(url = new wxStaticText(this, wxID_ANY, "/"), 1, wxALIGN_CENTER_VERTICAL);
     hsizer->Add(urlbtn = new wxButton(this, ID_URL_BTN, "修改"));
 
@@ -50,13 +53,20 @@ void RouterTree::OnItemMenu(wxTreeEvent& event) {
             addRoute(focused, [=](auto id) { return id.IsOk() ? new RouterViewPanel(view, tree, id) : nullptr; });
             }, ID_ROUTER);
 
+        itemAddMenu->AppendSeparator();
+
+        itemAddMenu->Append(ID_ERR_VIEW, "错误视图");
+        Bind(wxEVT_MENU, [=](auto&) {
+            addRoute(focused, [=](auto id) { return new ErrorViewPanel(view); }, true);
+            }, ID_ERR_VIEW);
+
         itemRCMenu->AppendSubMenu(itemAddMenu, "增加子视图");
         itemRCMenu->AppendSeparator();
     }
 
     itemRCMenu->Append(wxID_DELETE, "删除视图")->Enable(focused != tree->GetRootItem());
     Bind(wxEVT_MENU, [=](wxCommandEvent&) {
-        tree->SelectItem(selected = tree->GetItemParent(focused));
+        tree->SelectItem(tree->GetItemParent(focused));
         RouterViewPanel* rvp = (RouterViewPanel*)tree->GetItemData(selected);
         tree->Delete(focused);
         }, wxID_DELETE);

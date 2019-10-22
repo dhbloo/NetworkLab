@@ -21,7 +21,7 @@ public:
         Hide();
     }
     virtual ViewPtr getView() const = 0;
-    virtual int getSupportedMethod() const = 0;
+    virtual int getSupportedMethod() const { return 0; }
     virtual bool isRouter() const { return false; }
 
     const wxString name;

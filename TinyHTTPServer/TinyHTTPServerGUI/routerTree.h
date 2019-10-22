@@ -14,7 +14,7 @@ public:
     void enable(bool enable);
 
     template<typename Pred>
-    wxTreeItemId addRoute(wxTreeItemId parent, Pred create, bool append = false);
+    wxTreeItemId addRoute(wxTreeItemId parent, Pred create, bool error = false);
 private:
     wxBoxSizer* sizer, *hsizer;
     wxTreeCtrl* tree;
@@ -36,18 +36,21 @@ enum {
     ID_URL_BTN,
     ID_STATICFILE,
     ID_ROUTER,
+    ID_ERR_VIEW,
+    ID_REDIRECT
 };
 
 template<typename Pred>
-inline wxTreeItemId RouterTree::addRoute(wxTreeItemId parent, Pred create, bool append) {
+inline wxTreeItemId RouterTree::addRoute(wxTreeItemId parent, Pred create, bool error) {
     ViewPanel* vpNew = create(wxTreeItemId());
     std::string url = vpNew ? vpNew->url : "";
-    if (!askURL(url)) {
+    if (!error && !askURL(url)) {
         if (vpNew) delete vpNew;
         return wxTreeItemId();
     }
 
-    wxTreeItemId newItem = tree->PrependItem(parent, "");
+    wxTreeItemId newItem = error ? tree->AppendItem(parent, "")
+                                 : tree->PrependItem(parent, "");
     if (!vpNew) vpNew = create(newItem);
     tree->SetItemText(newItem, vpNew->name + " | " + (vpNew->url = url));
     tree->SetItemData(newItem, vpNew);
