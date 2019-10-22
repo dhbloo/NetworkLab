@@ -68,7 +68,8 @@ Request Request::parse(std::stringstream& ss) {
     }
 
     // ½âÎöHeaders
-    std::string buf = ss.str();
+    std::string buf = ss.str(); 
+    ss.seekg(0, ss.end);
     size_t lineStartPos;
     size_t lineEndPos = buf.find("\r\n");
     do {

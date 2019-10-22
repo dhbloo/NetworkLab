@@ -33,7 +33,6 @@ struct ClientInfo {
     Connection& conn;
     Request request;
     Response response;
-    std::stringstream receivedDataBuffer;
     int bytesReceived;
     int totalBytesReceived;
     int bytesSent;
@@ -60,7 +59,7 @@ class HttpServer {
     bool sendResponse(ClientInfo& client);
 
 public:
-    static const int MaxRequestBufferLength = 8192;
+    static const int MaxRequestBufferLength = 4096;
     static const int SelectListenIntervalMS = 500;
     std::string serverName = "TinyHttpServer/0.1 (Windows)";
 

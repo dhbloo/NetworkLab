@@ -34,7 +34,7 @@ int main() {
                 res.headers["Content-Type"] = "text/html;";
             }));
 
-        HttpServer server(nullptr, 5000, router, std::cout);
+        HttpServer server(nullptr, 80, router, std::cout);
 
         server.run();
     }

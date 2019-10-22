@@ -14,7 +14,10 @@ void RouterView::handle(Request& request, Response& response) {
         throw Abort(500, "No router param in url");
 
     Request subRequest = request;
-    subRequest.url = routerKV->second;
+    if (routerKV->second.empty() || routerKV->second.front() != '/')
+        subRequest.url = "/" + routerKV->second;
+    else 
+        subRequest.url = routerKV->second;
 
     ViewPtr viewPtr = router.resolve(subRequest, response);
     try {

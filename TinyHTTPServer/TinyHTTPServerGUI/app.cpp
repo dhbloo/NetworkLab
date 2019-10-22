@@ -8,7 +8,7 @@ std::unique_ptr<Router> App::GlobalRouter;
 
 bool App::OnInit() {
     GlobalHttpServer = nullptr;
-    GlobalRouter = std::make_unique<Router>();
+    GlobalRouter = nullptr;
 
     MainFrame* frame = new MainFrame();
     frame->Show(true);

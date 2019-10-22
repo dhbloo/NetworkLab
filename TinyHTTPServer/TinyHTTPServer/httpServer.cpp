@@ -87,7 +87,7 @@ HttpServer::~HttpServer() {
 }
 
 void HttpServer::handleConnection(Connection&& conn) {
-    ClientInfo client{ conn, {}, { "HTTP/1.1", 200 }, std::stringstream(), 0, 0 };
+    ClientInfo client{ conn, {}, {}, 0, 0, 0, 0 };
     char recvbuf[MaxRequestBufferLength];
 
     // 将本连接的socket加入列表
@@ -103,6 +103,7 @@ void HttpServer::handleConnection(Connection&& conn) {
     int& bytesReceived = client.bytesReceived;
     bool keepAlive = true;
     do {
+        std::stringstream receivedDataBuffer;
         // 读取缓冲区数据
         bytesReceived = recv(conn.socket, recvbuf, sizeof(recvbuf) - 1, 0);
 
@@ -116,13 +117,13 @@ void HttpServer::handleConnection(Connection&& conn) {
 
         assert(bytesReceived <= sizeof(recvbuf));
         recvbuf[bytesReceived] = '\0';
-        client.receivedDataBuffer << recvbuf;
+        receivedDataBuffer << recvbuf;
         client.totalBytesReceived += bytesReceived;
 
         Request &request = client.request;
         try {
             // 从接受数据中解析Request
-            request = Request::parse(client.receivedDataBuffer);
+            request = Request::parse(receivedDataBuffer);
             logStream << logLock.out << conn.ipv4_str() << " [Info]Request("
                 << bytesReceived << " bytes) " << request.methodStr
                 << request.version.substr(4) << " " << request.url << logLock.endl;
@@ -150,6 +151,9 @@ void HttpServer::handleConnection(Connection&& conn) {
             keepAlive = !(
                 request.version == "HTTP/1.1" && request.lowerHeader("Connection") == "close" ||
                 request.version == "HTTP/1.0" && request.lowerHeader("Connection") != "keep-alive");
+
+            // 设置默认响应
+            response = { "HTTP/1.1", 200 };
 
             // 根据Router中的配置获得View, 没有找到则丢出404/405错误
             router.resolve(request, response)->handle(request, response);

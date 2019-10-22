@@ -16,3 +16,5 @@
 
 #include <wx/notebook.h>
 #include <wx/listctrl.h>
+#include <wx/treectrl.h>
+#include <wx/statline.h>

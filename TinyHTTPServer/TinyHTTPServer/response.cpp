@@ -38,6 +38,8 @@ std::string Response::toString() const {
 }
 
 std::string Response::statusInfo() const {
-    assert(StatusMap.find(statusCode) != StatusMap.end());
-    return StatusMap[statusCode];
+    if (StatusMap.find(statusCode) != StatusMap.end())
+        return StatusMap[statusCode];
+    else
+        return "";
 }

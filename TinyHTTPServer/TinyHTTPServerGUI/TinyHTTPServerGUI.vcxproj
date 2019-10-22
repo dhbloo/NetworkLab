@@ -150,10 +150,17 @@
   <ItemGroup>
     <ClCompile Include="app.cpp" />
     <ClCompile Include="mainFrame.cpp" />
+    <ClCompile Include="routerTree.cpp" />
+    <ClCompile Include="routerViewPanel.cpp" />
+    <ClCompile Include="staticFileViewPanel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
     <ClInclude Include="mainFrame.h" />
+    <ClInclude Include="routerTree.h" />
+    <ClInclude Include="routerViewPanel.h" />
+    <ClInclude Include="staticFileViewPanel.h" />
+    <ClInclude Include="viewPanel.h" />
     <ClInclude Include="wxcommon.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

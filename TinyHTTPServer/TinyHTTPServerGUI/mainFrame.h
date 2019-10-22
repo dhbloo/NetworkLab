@@ -3,6 +3,8 @@
 #include "wxcommon.h"
 #include <memory>
 
+class RouterTree;
+
 class MainFrame : public wxFrame {
 public:
     MainFrame();
@@ -10,6 +12,7 @@ private:
     wxTextCtrl* ipText, * portText, *logText;
     wxButton* startBtn;
     wxListView* connList;
+    std::unique_ptr<RouterTree> routerTree;
     std::unique_ptr<wxStreamToTextRedirector> redirect;
 
     void OnStart(wxCommandEvent& event);

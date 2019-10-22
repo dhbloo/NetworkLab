@@ -1,10 +1,11 @@
 #include "mainFrame.h"
+#include "routerTree.h"
 #include "app.h"
 
 #include <TinyHTTPServer/httpServer.h>
 
 MainFrame::MainFrame() : 
-    wxFrame(NULL, wxID_ANY, "Http 服务器", wxDefaultPosition, wxSize(680, 550)) {
+    wxFrame(NULL, wxID_ANY, "Http 服务器", wxDefaultPosition, wxSize(680, 500)) {
 
     CreateStatusBar(2);
 
@@ -12,25 +13,20 @@ MainFrame::MainFrame() :
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     panel->SetSizerAndFit(topSizer);
 
-    wxStaticBoxSizer* overviewSizer = new wxStaticBoxSizer(wxVERTICAL, panel, "服务器配置");
+    wxStaticBoxSizer* overviewSizer = new wxStaticBoxSizer(wxHORIZONTAL, panel, "服务器配置");
     topSizer->Add(overviewSizer, 0, wxALL, 10);
 
-    wxBoxSizer* lineSizer;
-    overviewSizer->Add(lineSizer = new wxBoxSizer(wxHORIZONTAL));
-    lineSizer->Add(new wxStaticText(panel, wxID_ANY, "主机号"), 0, wxALL | wxALIGN_CENTRE_VERTICAL, 10);
-    lineSizer->Add(ipText = new wxTextCtrl(panel, wxID_ANY, "0.0.0.0"), 0, wxALL, 5);
-
-    overviewSizer->Add(lineSizer = new wxBoxSizer(wxHORIZONTAL));
-    lineSizer->Add(new wxStaticText(panel, wxID_ANY, "端口号"), 0, wxALL | wxALIGN_CENTRE_VERTICAL, 10);
-    lineSizer->Add(portText = new wxTextCtrl(panel, wxID_ANY, "80"), 0, wxALL, 5);
-
-    overviewSizer->Add(lineSizer = new wxBoxSizer(wxHORIZONTAL));
-    lineSizer->Add(startBtn = new wxButton(panel, ID_START_BTN, "启动"), 0, wxALL, 5);
+    overviewSizer->Add(new wxStaticText(panel, wxID_ANY, "主机号"), 0, wxALL | wxALIGN_CENTRE_VERTICAL, 10);
+    overviewSizer->Add(ipText = new wxTextCtrl(panel, wxID_ANY, "0.0.0.0"), 0, wxALL, 5);
+    overviewSizer->Add(new wxStaticText(panel, wxID_ANY, "端口号"), 0, wxALL | wxALIGN_CENTRE_VERTICAL, 10);
+    overviewSizer->Add(portText = new wxTextCtrl(panel, wxID_ANY, "80"), 0, wxALL, 5);
+    overviewSizer->Add(startBtn = new wxButton(panel, ID_START_BTN, "启动"), 0, wxALL, 5);
 
     wxNotebook* tabView = new wxNotebook(panel, wxID_ANY);
     topSizer->Add(tabView, 1, wxLEFT | wxRIGHT | wxEXPAND, 10);
 
     wxPanel* page;
+    wxBoxSizer* lineSizer;
     tabView->AddPage(page = new wxPanel(tabView, wxID_ANY), "日志");
     page->SetSizerAndFit(lineSizer = new wxBoxSizer(wxVERTICAL));
     lineSizer->Add(
@@ -53,6 +49,8 @@ MainFrame::MainFrame() :
 
     tabView->AddPage(page = new wxPanel(tabView, wxID_ANY), "路由");
     page->SetSizerAndFit(lineSizer = new wxBoxSizer(wxVERTICAL));
+    routerTree = std::make_unique<RouterTree>(page);
+    lineSizer->Add((wxPanel*)routerTree.get(), 1, wxALL | wxEXPAND, 8);
 
     redirect = std::make_unique<wxStreamToTextRedirector>(logText);
 }
@@ -70,6 +68,8 @@ void MainFrame::OnStart(wxCommandEvent& event) {
         }
 
         try {
+            App::GlobalRouter = routerTree->makeRouter();
+
             App::GlobalHttpServer = std::make_unique<HttpServer>(
                 ipText->GetValue().c_str(),
                 (uint16_t)port,
@@ -80,6 +80,7 @@ void MainFrame::OnStart(wxCommandEvent& event) {
             App::GlobalHttpServer->start();
             SetStatusText(App::GlobalHttpServer->ipAddress());
 
+            routerTree->enable(false);
             startBtn->SetLabelText("停止");
             ipText->Enable(false);
             portText->Enable(false);
@@ -94,6 +95,7 @@ void MainFrame::OnStart(wxCommandEvent& event) {
             startBtn->Enable(true);
             ipText->Enable(true);
             portText->Enable(true);
+            routerTree->enable(true);
         }).detach();
 
         startBtn->SetLabelText("启动");
@@ -117,8 +119,9 @@ void MainFrame::OnRefreshList(wxCommandEvent& event) {
             connList->SetItem(itemIdx, 3, client->request.version);
             connList->SetItem(itemIdx, 4, client->request.methodStr);
             connList->SetItem(itemIdx, 5, client->request.url);
-            connList->SetItem(itemIdx, 6, to_string(client->response.statusCode)
-                + " " + client->response.statusInfo());
+            if (client->response.statusCode)
+                connList->SetItem(itemIdx, 6, to_string(client->response.statusCode)
+                    + " " + client->response.statusInfo());
             connList->SetItem(itemIdx, 7, to_string(client->totalBytesSent));
         }
     }
