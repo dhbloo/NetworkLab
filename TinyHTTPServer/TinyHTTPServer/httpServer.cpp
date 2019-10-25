@@ -163,6 +163,10 @@ void HttpServer::handleConnection(Connection&& conn) {
             // 设置默认响应
             response = { "HTTP/1.1", 200 };
 
+            // 在响应中加入通用响应Headers(Server, Date, Connection)
+            response.headers["Server"] = serverName;
+            response.headers["Date"] = Rfc1123DateTimeNow();
+
             // 根据Router中的配置获得View, 没有找到则丢出404/405错误
             router.resolve(request, response)->handle(request, response);
 
@@ -210,10 +214,6 @@ void HttpServer::handleConnection(Connection&& conn) {
                     << " Abort in error handler!" << logLock.endl;
             }
         }
-
-        // 在响应中加入通用响应Headers(Server, Date, Connection)
-        response.headers["Server"] = serverName;
-        response.headers["Date"] = Rfc1123DateTimeNow();
 
         // 如果不是持久连接,在响应头中指出断开连接
         if (!keepAlive)

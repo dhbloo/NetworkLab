@@ -34,9 +34,14 @@ const std::unordered_map<std::string, std::string> MimeType = {
 
 namespace fs = std::filesystem;
 
-std::string StaticFileView::DefaultExt = ".html";
-
-StaticFileView::StaticFileView(std::string path) : directory(path) {
+StaticFileView::StaticFileView(
+    std::string path, 
+    std::string defaultExt,
+    std::string defaultFile
+) : 
+    directory(path), 
+    defaultExt(defaultExt),
+    defaultFile(defaultFile) {
     if (directory.empty() || directory.back() != '/')
         directory.append("/");
 }
@@ -54,12 +59,12 @@ void StaticFileView::handle(Request& request, Response& response) {
     bool isDir = fs::is_directory(filePath);
     bool hasExt = filePath.has_extension();
 
-    // 对于目录查找目录下的index.(ext)
+    // 对于目录查找目录下的默认文件(default file)
     if (isDir)
-        filePath /= "index" + DefaultExt;
+        filePath /= defaultFile;
     // 对于没带扩展名的文件, 自动添加默认扩展名
     else if (!hasExt)
-        filePath.replace_extension(DefaultExt);
+        filePath.replace_extension(defaultExt);
 
     if (!fs::exists(filePath))
         throw Abort(404, "File not found: " + filePath.string());

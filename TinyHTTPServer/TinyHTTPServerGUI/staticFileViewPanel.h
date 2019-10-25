@@ -8,7 +8,7 @@ public:
     int getSupportedMethod() const override;
     ViewPtr getView() const override;
 private:
-    wxTextCtrl* pathText;
+    wxTextCtrl* pathText, * defExtText, * defFileText;
 
     void OnChooseDir(wxCommandEvent& event);
 };

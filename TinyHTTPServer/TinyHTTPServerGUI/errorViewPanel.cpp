@@ -32,7 +32,9 @@ ViewPtr ErrorViewPanel::getView() const {
             [](auto& req, auto& res) {
                 res.body = R"(<h1 style="text-align:center;">)"
                     + std::to_string(res.statusCode) + " "
-                    + res.statusInfo() + "!</h1>";
+                    + res.statusInfo()
+                    + R"(!</h1><HR><p style="text-align:center;">)"
+                    + res.headers["Server"] + "</p>";
                 res.headers["Content-Type"] = "text/html;";
             });
 
