@@ -2,17 +2,17 @@
 
 #include "viewPanel.h"
 
-class StaticFileViewPanel : public ViewPanel {
+class StaticFileViewPanel : public ViewPanel
+{
 public:
-    StaticFileViewPanel(wxWindow* parent);
-    int getSupportedMethod() const override;
+    StaticFileViewPanel(wxWindow *parent);
+    int     getSupportedMethod() const override;
     ViewPtr getView() const override;
+
 private:
-    wxTextCtrl* pathText, * defExtText, * defFileText;
+    wxTextCtrl *pathText, *defExtText, *defFileText;
 
-    void OnChooseDir(wxCommandEvent& event);
+    void OnChooseDir(wxCommandEvent &event);
 };
 
-enum {
-    ID_CHOOSE_DIR = 1900
-};
+enum { ID_CHOOSE_DIR = 1900 };

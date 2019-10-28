@@ -1,6 +1,7 @@
 #include "response.h"
-#include <sstream>
+
 #include <cassert>
+#include <sstream>
 
 static std::map<int, std::string> StatusMap = {
     {200, "OK"},
@@ -20,14 +21,15 @@ static std::map<int, std::string> StatusMap = {
     {505, "HTTP Version Not Supported"},
 };
 
-std::string Response::toString() const {
+std::string Response::toString() const
+{
     std::stringstream ss;
 
     // 生成状态行
     ss << version << ' ' << statusCode << ' ' << statusInfo() << "\r\n";
 
     // 生成headers
-    for (const auto& header : headers) {
+    for (const auto &header : headers) {
         ss << header.first << ": " << header.second << "\r\n";
     }
 
@@ -37,7 +39,8 @@ std::string Response::toString() const {
     return ss.str();
 }
 
-std::string Response::statusInfo() const {
+std::string Response::statusInfo() const
+{
     if (StatusMap.find(statusCode) != StatusMap.end())
         return StatusMap[statusCode];
     else

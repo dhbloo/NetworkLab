@@ -1,32 +1,29 @@
 #include "request.h"
+
 #include "requestExcept.h"
 #include "util.h"
-#include <vector>
+
 #include <map>
 #include <sstream>
+#include <vector>
 
-static const std::map<std::string, Request::Method> MethodMap = {
-    {"GET", Request::GET},
-    {"HEAD", Request::HEAD},
-    {"POST", Request::POST},
-    {"PUT", Request::PUT},
-    {"DELETE", Request::DEL},
-    {"OPTIONS", Request::OPTIONS}
-};
+static const std::map<std::string, Request::Method> MethodMap = {{"GET", Request::GET},
+                                                                 {"HEAD", Request::HEAD},
+                                                                 {"POST", Request::POST},
+                                                                 {"PUT", Request::PUT},
+                                                                 {"DELETE", Request::DEL},
+                                                                 {"OPTIONS", Request::OPTIONS}};
 
-static const std::vector<std::string> UnImpMethods = {
-    "TRACE",
-    "CONNECT",
-    "LINK",
-    "UNLINK"
-};
+static const std::vector<std::string> UnImpMethods = {"TRACE", "CONNECT", "LINK", "UNLINK"};
 
-std::string Request::lowerHeader(std::string key) {
+std::string Request::lowerHeader(std::string key)
+{
     auto it = headers.find(key);
     return it != headers.end() ? ToLower(it->second) : "";
 }
 
-Request Request::parse(std::stringstream& ss) {
+Request Request::parse(std::stringstream &ss)
+{
     Request request;
 
     // 解析请求行
@@ -37,7 +34,8 @@ Request Request::parse(std::stringstream& ss) {
     if (methodIt != MethodMap.end()) {
         request.method = methodIt->second;
     }
-    else if (std::find(UnImpMethods.begin(), UnImpMethods.end(), request.methodStr) != UnImpMethods.end()) {
+    else if (std::find(UnImpMethods.begin(), UnImpMethods.end(), request.methodStr)
+             != UnImpMethods.end()) {
         request.method = Request::UNSUPPORTED;
         return request;
     }
@@ -49,13 +47,13 @@ Request Request::parse(std::stringstream& ss) {
     size_t questMarkPos = request.url.find_first_of('?');
     if (questMarkPos != std::string::npos) {
         std::string queryStr = request.url.substr(questMarkPos + 1);
-        request.url = request.url.substr(0, questMarkPos);
+        request.url          = request.url.substr(0, questMarkPos);
 
         size_t delimPos, lastPos = 0;
         do {
-            delimPos = queryStr.find_first_of('&', lastPos);
+            delimPos          = queryStr.find_first_of('&', lastPos);
             std::string kvStr = queryStr.substr(lastPos, delimPos - lastPos);
-            lastPos = delimPos + 1;
+            lastPos           = delimPos + 1;
 
             size_t equalPos = kvStr.find_first_of('=');
             if (equalPos == std::string::npos) {
@@ -68,16 +66,16 @@ Request Request::parse(std::stringstream& ss) {
     }
 
     // 解析Headers
-    std::string buf = ss.str(); 
+    std::string buf = ss.str();
     ss.seekg(0, ss.end);
     size_t lineStartPos;
     size_t lineEndPos = buf.find("\r\n");
     do {
         lineStartPos = lineEndPos + 2;
-        lineEndPos = buf.find("\r\n", lineStartPos);
+        lineEndPos   = buf.find("\r\n", lineStartPos);
         if (lineEndPos > lineStartPos) {
             std::string_view line(buf.data() + lineStartPos, lineEndPos - lineStartPos);
-            size_t delimPos = line.find_first_of(':');
+            size_t           delimPos = line.find_first_of(':');
 
             if (delimPos == std::string::npos)
                 throw Abort(400, "Error when parsing request header");

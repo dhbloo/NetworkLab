@@ -2,11 +2,11 @@
 #define _HEADER_RESPONSE_
 #pragma once
 
-#include <string>
 #include <map>
+#include <string>
 
-
-struct Response {
+struct Response
+{
     std::string version;
 
     int statusCode;
@@ -14,7 +14,6 @@ struct Response {
     std::map<std::string, std::string> headers;
 
     std::string body;
-
 
     std::string toString() const;
     std::string statusInfo() const;

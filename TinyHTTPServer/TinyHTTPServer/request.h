@@ -2,17 +2,18 @@
 #define _HEADER_REQUEST_
 #pragma once
 
-#include <string>
 #include <map>
+#include <string>
 
-struct Request {
+struct Request
+{
     enum Method {
-        GET = 1, 
-        HEAD = 2, 
-        POST = 4, 
-        PUT = 8, 
-        DEL = 16,
-        OPTIONS = 32,
+        GET         = 1,
+        HEAD        = 2,
+        POST        = 4,
+        PUT         = 8,
+        DEL         = 16,
+        OPTIONS     = 32,
         UNSUPPORTED = 0
     } method;
 
@@ -30,17 +31,13 @@ struct Request {
 
     std::string body;
 
-
     std::string lowerHeader(std::string key);
 
-
-    static Request parse(std::stringstream& ss);
+    static Request parse(std::stringstream &ss);
 };
 
-
 namespace RequestParse {
-    Request parse(std::stringstream& ss);
+Request parse(std::stringstream &ss);
 }
-
 
 #endif

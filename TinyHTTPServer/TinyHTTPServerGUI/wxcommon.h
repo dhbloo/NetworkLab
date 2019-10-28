@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
+    #define _CRT_SECURE_NO_WARNINGS
 #endif
 
 // Disable Winsock
@@ -11,10 +11,10 @@
 #include <wx/wxprec.h>
 
 #ifndef WX_PRECOMP
-#include <wx/wx.h>
+    #include <wx/wx.h>
 #endif
 
-#include <wx/notebook.h>
 #include <wx/listctrl.h>
-#include <wx/treectrl.h>
+#include <wx/notebook.h>
 #include <wx/statline.h>
+#include <wx/treectrl.h>

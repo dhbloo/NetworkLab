@@ -1,52 +1,48 @@
 #include "staticFileView.h"
+
 #include "request.h"
-#include "response.h"
 #include "requestExcept.h"
+#include "response.h"
 #include "util.h"
-#include <fstream>
+
 #include <filesystem>
+#include <fstream>
 #include <unordered_map>
 
+const std::unordered_map<std::string, std::string> MimeType = {{"html", "text/html"},
+                                                               {"htm", "text/html"},
+                                                               {"css", "text/css"},
+                                                               {"js", "text/javascript"},
+                                                               {"txt", "text/plain"},
+                                                               {"xml", "text/xml"},
+                                                               {"markdown", "text/markdown"},
 
-const std::unordered_map<std::string, std::string> MimeType = {
-    {"html", "text/html"},
-    {"htm", "text/html"},
-    {"css", "text/css"},
-    {"js", "text/javascript"},
-    {"txt", "text/plain"},
-    {"xml", "text/xml"},
-    {"markdown", "text/markdown"},
+                                                               {"gif", "image/gif"},
+                                                               {"jpeg", "image/jpeg"},
+                                                               {"jpg", "image/jpeg"},
+                                                               {"png", "image/png"},
+                                                               {"bmp", "image/bmp"},
+                                                               {"ico", "image/x-icon"},
+                                                               {"tif", "image/tiff"},
+                                                               {"tiff", "image/tiff"},
 
-    {"gif", "image/gif"},
-    {"jpeg", "image/jpeg"},
-    {"jpg", "image/jpeg"},
-    {"png", "image/png"},
-    {"bmp", "image/bmp"},
-    {"ico", "image/x-icon"},
-    {"tif", "image/tiff"},
-    {"tiff", "image/tiff"},
-
-    {"json", "application/json"},
-    {"wasm", "application/wasm"},
-    {"pdf", "application/pdf"}
-};
-
+                                                               {"json", "application/json"},
+                                                               {"wasm", "application/wasm"},
+                                                               {"pdf", "application/pdf"}};
 
 namespace fs = std::filesystem;
 
-StaticFileView::StaticFileView(
-    std::string path, 
-    std::string defaultExt,
-    std::string defaultFile
-) : 
-    directory(path), 
-    defaultExt(defaultExt),
-    defaultFile(defaultFile) {
+StaticFileView::StaticFileView(std::string path, std::string defaultExt, std::string defaultFile)
+    : directory(path)
+    , defaultExt(defaultExt)
+    , defaultFile(defaultFile)
+{
     if (directory.empty() || directory.back() != '/')
         directory.append("/");
 }
 
-void StaticFileView::handle(Request& request, Response& response) {
+void StaticFileView::handle(Request &request, Response &response)
+{
     std::string urlFilePath;
 
     auto dirKV = request.urlParams.find("filepath");
@@ -56,8 +52,8 @@ void StaticFileView::handle(Request& request, Response& response) {
     urlFilePath = UrlDecode(urlFilePath);
 
     fs::path filePath = fs::u8path(directory + urlFilePath);
-    bool isDir = fs::is_directory(filePath);
-    bool hasExt = filePath.has_extension();
+    bool     isDir    = fs::is_directory(filePath);
+    bool     hasExt   = filePath.has_extension();
 
     // 对于目录查找目录下的默认文件(default file)
     if (isDir)
@@ -70,15 +66,12 @@ void StaticFileView::handle(Request& request, Response& response) {
         throw Abort(404, "File not found: " + filePath.string());
 
     std::ifstream fileStream(filePath, std::ios_base::binary);
-    response.body.assign(
-        std::istreambuf_iterator<char>(fileStream),
-        std::istreambuf_iterator<char>()
-    );
-    
+    response.body.assign(std::istreambuf_iterator<char>(fileStream),
+                         std::istreambuf_iterator<char>());
+
     auto contentTypeIt = MimeType.find(filePath.extension().string().substr(1));
     if (contentTypeIt != MimeType.end())
         response.headers["Content-Type"] = contentTypeIt->second;
     else
         response.headers["Content-Type"] = "application/octet-stream;";
 }
-

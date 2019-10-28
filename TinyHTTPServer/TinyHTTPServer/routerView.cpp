@@ -1,14 +1,15 @@
 #include "routerView.h"
+
 #include "request.h"
-#include "response.h"
 #include "requestExcept.h"
+#include "response.h"
 
-RouterView::RouterView(const Router& router) : router(router) {}
+RouterView::RouterView(const Router &router) : router(router) {}
 
-
-void RouterView::handle(Request& request, Response& response) {
+void RouterView::handle(Request &request, Response &response)
+{
     beforeRequest(request, response);
-    
+
     auto routerKV = request.urlParams.find("router");
     if (routerKV == request.urlParams.end())
         throw Abort(500, "No router param in url");
@@ -16,7 +17,7 @@ void RouterView::handle(Request& request, Response& response) {
     Request subRequest = request;
     if (routerKV->second.empty() || routerKV->second.front() != '/')
         subRequest.url = "/" + routerKV->second;
-    else 
+    else
         subRequest.url = routerKV->second;
 
     ViewPtr viewPtr = router.resolve(subRequest, response);
