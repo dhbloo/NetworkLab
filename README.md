@@ -5,10 +5,12 @@
 
 1. TinyHTTPServer
 
-    简易的 HTTP 静态页面多线程服务器，使用 C++ 17 + Winsock 实现
+    简易的 HTTP 静态页面多线程服务器，使用 C++ 17 + Winsock + wxWidgets（GUI部分） 实现
 
-2. ReliableDataTransfer
+    目前已实现的功能：多线程、GUI、URL编码/解码、自定义路由、静态文件视图、POST视图、子路由嵌套、错误处理、重定向
+
+1. ReliableDataTransfer
 
     可靠数据传输协议的实现
 
-3. 组网实验
+2. 组网实验
