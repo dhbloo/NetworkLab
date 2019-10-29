@@ -5,6 +5,7 @@
 
 StaticFileViewPanel::StaticFileViewPanel(wxWindow *parent) : ViewPanel(parent, "静态文件视图")
 {
+    viewSizer->Add(new wxStaticText(this, wxID_ANY, "支持方法: GET, HEAD"), 0, wxALL, 5);
     viewSizer->Add(new wxStaticText(this, wxID_ANY, "参数: <filepath>, 文件相对路径"), 0, wxALL, 5);
     viewSizer->Add(new wxStaticText(this, wxID_ANY, "URL例如: /<path:filepath>"), 0, wxALL, 5);
     viewSizer->AddSpacer(10);
@@ -45,7 +46,7 @@ ViewPtr StaticFileViewPanel::getView() const
 
 int StaticFileViewPanel::getSupportedMethod() const
 {
-    return Request::GET;
+    return Request::GET | Request::HEAD;
 }
 
 void StaticFileViewPanel::OnChooseDir(wxCommandEvent &event)

@@ -33,6 +33,9 @@
     <ClCompile Include="errorViewPanel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="postFileViewPanel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.h">
@@ -57,6 +60,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="errorViewPanel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="postFileViewPanel.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

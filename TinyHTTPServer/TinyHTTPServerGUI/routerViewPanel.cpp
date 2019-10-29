@@ -10,6 +10,10 @@ RouterViewPanel::RouterViewPanel(wxWindow *parent, wxTreeCtrl *tree, wxTreeItemI
     , tree(tree)
     , id(id)
 {
+    viewSizer->Add(new wxStaticText(this, wxID_ANY, "支持方法: GET, HEAD, POST, DELETE"),
+                   0,
+                   wxALL,
+                   5);
     viewSizer->Add(new wxStaticText(this, wxID_ANY, "参数: <router>, 子视图URL"), 0, wxALL, 5);
     viewSizer->Add(new wxStaticText(this, wxID_ANY, "URL例如: /<path:router>"), 0, wxALL, 5);
 }
@@ -21,7 +25,7 @@ ViewPtr RouterViewPanel::getView() const
 
 int RouterViewPanel::getSupportedMethod() const
 {
-    return Request::GET;
+    return Request::GET | Request::HEAD | Request::POST | Request::DEL;
 }
 
 std::unique_ptr<Router> RouterViewPanel::makeRouter() const

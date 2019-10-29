@@ -129,16 +129,17 @@
   <ItemGroup>
     <ClCompile Include="httpServer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="postFileView.cpp" />
     <ClCompile Include="request.cpp" />
     <ClCompile Include="response.cpp" />
     <ClCompile Include="router.cpp" />
     <ClCompile Include="routerView.cpp" />
     <ClCompile Include="staticFileView.cpp" />
     <ClCompile Include="util.cpp" />
-    <ClCompile Include="view.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="funcView.h" />
+    <ClInclude Include="postFileView.h" />
     <ClInclude Include="requestExcept.h" />
     <ClInclude Include="httpServer.h" />
     <ClInclude Include="request.h" />

@@ -5,7 +5,7 @@
 
 #include <TinyHTTPServer/httpServer.h>
 
-MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Http 服务器", wxDefaultPosition, wxSize(870, 500))
+MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Http 服务器", wxDefaultPosition, wxSize(870, 510))
 {
     CenterOnScreen();
 
@@ -60,6 +60,7 @@ MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Http 服务器", wxDefaultPositio
     connList->AppendColumn("URL");
     connList->AppendColumn("状态码");
     connList->AppendColumn("响应字节数");
+    connList->AppendColumn("客户端", wxLIST_FORMAT_LEFT, 150);
     connList->AppendColumn("最近响应时间", wxLIST_FORMAT_LEFT, 200);
 
     tabView->AddPage(page = new wxPanel(tabView, wxID_ANY), "路由");
@@ -141,7 +142,12 @@ void MainFrame::OnRefreshList(wxCommandEvent &event)
                                       + client->response.statusInfo());
             connList->SetItem(itemIdx, 7, to_string(client->totalBytesSent));
             try {
-                connList->SetItem(itemIdx, 8, client->response.headers.at("Date"));
+                connList->SetItem(itemIdx, 8, client->request.headers.at("User-Agent"));
+            }
+            catch (...) {
+            }
+            try {
+                connList->SetItem(itemIdx, 9, client->response.headers.at("Date"));
             }
             catch (...) {
             }

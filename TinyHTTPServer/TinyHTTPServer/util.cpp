@@ -2,20 +2,17 @@
 
 #include <algorithm>
 #include <cassert>
-#include <ctime>
 
 static const char *DAY_NAMES[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 static const char *MONTH_NAMES[] =
     {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-std::string Rfc1123DateTimeNow()
+std::string Rfc1123DateTime(time_t t)
 {
     const int RFC1123_TIME_LEN = 29;
     char      buf[RFC1123_TIME_LEN + 1];
-    time_t    t;
     ::tm      tm;
 
-    time(&t);
     gmtime_s(&tm, &t);
 
     strftime(buf, RFC1123_TIME_LEN + 1, "---, %d --- %Y %H:%M:%S GMT", &tm);
@@ -23,6 +20,14 @@ std::string Rfc1123DateTimeNow()
     memcpy(buf + 8, MONTH_NAMES[tm.tm_mon], 3);
 
     return buf;
+}
+
+std::string Rfc1123DateTimeNow()
+{
+    time_t t;
+    time(&t);
+
+    return Rfc1123DateTime(t);
 }
 
 std::string TimeNow()

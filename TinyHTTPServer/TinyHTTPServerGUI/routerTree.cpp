@@ -4,6 +4,7 @@
 #include "errorViewPanel.h"
 #include "routerViewPanel.h"
 #include "staticFileViewPanel.h"
+#include "postFileViewPanel.h"
 
 RouterTree::RouterTree(wxWindow *parent) : wxPanel(parent, wxID_ANY)
 {
@@ -58,6 +59,14 @@ void RouterTree::OnItemMenu(wxTreeEvent &event)
                 addRoute(focused, [=](auto id) { return new StaticFileViewPanel(view); });
             },
             ID_STATICFILE);
+
+        itemAddMenu->Append(ID_POSTFILE, "提交文件视图");
+        Bind(
+            wxEVT_MENU,
+            [=](auto &) {
+                addRoute(focused, [=](auto id) { return new PostFileViewPanel(view); });
+            },
+            ID_POSTFILE);
 
         itemAddMenu->Append(ID_ROUTER, "子路由视图");
         Bind(

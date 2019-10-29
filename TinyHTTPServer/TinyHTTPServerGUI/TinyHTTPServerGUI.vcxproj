@@ -152,6 +152,7 @@
     <ClCompile Include="app.cpp" />
     <ClCompile Include="errorViewPanel.cpp" />
     <ClCompile Include="mainFrame.cpp" />
+    <ClCompile Include="postFileViewPanel.cpp" />
     <ClCompile Include="routerTree.cpp" />
     <ClCompile Include="routerViewPanel.cpp" />
     <ClCompile Include="staticFileViewPanel.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="app.h" />
     <ClInclude Include="errorViewPanel.h" />
     <ClInclude Include="mainFrame.h" />
+    <ClInclude Include="postFileViewPanel.h" />
     <ClInclude Include="routerTree.h" />
     <ClInclude Include="routerViewPanel.h" />
     <ClInclude Include="staticFileViewPanel.h" />

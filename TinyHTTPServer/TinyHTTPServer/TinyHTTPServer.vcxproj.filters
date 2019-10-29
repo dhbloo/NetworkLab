@@ -30,9 +30,6 @@
     <ClCompile Include="router.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="view.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="routerView.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -40,6 +37,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="util.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="postFileView.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -75,6 +75,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="funcView.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="postFileView.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

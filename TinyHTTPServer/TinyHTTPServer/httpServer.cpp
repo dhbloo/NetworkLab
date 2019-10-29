@@ -182,12 +182,12 @@ void HttpServer::handleConnection(Connection &&conn)
         }
         // 处理请求重定向异常
         catch (Redirect r) {
-            response.statusCode = 302;
+            response.statusCode          = 302;
+            response.headers["Location"] = UrlEncode(r.url);
+
             logStream << logLock.out << conn.ipv4_str() << " [Info]Response(" << response.statusCode
                       << " " << response.statusInfo() << "): " << r.what()
                       << " Location = " << r.url << logLock.endl;
-
-            response.headers["Location"] = r.url;
         }
         // 处理请求终止异常
         catch (Abort a) {
@@ -206,7 +206,7 @@ void HttpServer::handleConnection(Connection &&conn)
             }
             catch (Redirect r) {
                 response.statusCode          = 302;
-                response.headers["Location"] = r.url;
+                response.headers["Location"] = UrlEncode(r.url);
 
                 logStream << logLock.out << conn.ipv4_str() << " [Erro]Response("
                           << response.statusCode << " " << response.statusInfo()

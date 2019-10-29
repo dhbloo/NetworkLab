@@ -5,6 +5,7 @@
 
 static std::map<int, std::string> StatusMap = {
     {200, "OK"},
+    {201, "Created"},
 
     {301, "Moved Permanently"},
     {302, "Found"},

@@ -29,6 +29,9 @@ Request Request::parse(std::stringstream &ss)
     // 解析请求行
     ss >> request.methodStr >> request.url >> request.version;
 
+    // 解码URL
+    request.url = UrlDecode(request.url);
+
     // 解析HTTP方法
     auto methodIt = MethodMap.find(request.methodStr);
     if (methodIt != MethodMap.end()) {

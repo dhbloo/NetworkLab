@@ -34,7 +34,15 @@ private:
     bool askURL(std::string &url);
 };
 
-enum { ID_RT_TREE = 1800, ID_URL_BTN, ID_STATICFILE, ID_ROUTER, ID_ERR_VIEW, ID_REDIRECT };
+enum {
+    ID_RT_TREE = 1800,
+    ID_URL_BTN,
+    ID_STATICFILE,
+    ID_POSTFILE,
+    ID_ROUTER,
+    ID_ERR_VIEW,
+    ID_REDIRECT
+};
 
 template<typename Pred>
 inline wxTreeItemId RouterTree::addRoute(wxTreeItemId parent, Pred create, bool error)
