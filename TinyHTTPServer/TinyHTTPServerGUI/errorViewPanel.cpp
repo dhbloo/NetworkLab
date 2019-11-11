@@ -43,9 +43,14 @@ ViewPtr ErrorViewPanel::getView() const
     switch (radio->GetSelection()) {
     case 0:
         return MakeFuncView([](auto &req, auto &res) {
+            std::string error;
+            if (req.headers.find("error") != req.headers.end())
+                error = R"(<p style="text-align:center;color:red;">)" + req.headers["error"] + "</p>";
+
             res.body = R"(<h1 style="text-align:center;">)" + std::to_string(res.statusCode) + " "
-                       + res.statusInfo() + R"(!</h1><HR><p style="text-align:center;">)"
-                       + res.headers["Server"] + "</p>";
+                       + res.statusInfo() + "!</h1>" + error
+                       + R"(<HR><p style="text-align:center;">)" + res.headers["Server"]
+                       + "</p>";
             res.headers["Content-Type"] = "text/html;";
         });
 

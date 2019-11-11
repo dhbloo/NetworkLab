@@ -26,6 +26,7 @@ void RouterView::handle(Request &request, Response &response)
     }
     catch (Abort a) {
         response.statusCode = a.statusCode;
+        request.headers["error"] = a.what();
 
         // 在Router中寻找是否有局部/全局错误处理View
         ViewPtr errorView = router.getErrorHandler(response.statusCode);

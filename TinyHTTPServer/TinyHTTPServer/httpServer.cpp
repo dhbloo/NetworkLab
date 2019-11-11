@@ -192,6 +192,7 @@ void HttpServer::handleConnection(Connection &&conn)
         // 处理请求终止异常
         catch (Abort a) {
             response.statusCode = a.statusCode;
+            request.headers["error"] = a.what();
             try {
                 // 在Router中寻找是否有局部/全局错误处理View
                 ViewPtr errorView = router.getErrorHandler(response.statusCode);
