@@ -1,7 +1,5 @@
 #include "Common.h"
 #include "Global.h"
-#include "RdtSender.h"
-#include "RdtReceiver.h"
 #include "GBNRdtSender.h"
 #include "GBNRdtReceiver.h"
 

@@ -1,12 +1,12 @@
 #include "Common.h"
+#include "GBNTcpRdtReceiver.h"
+#include "GBNTcpRdtSender.h"
 #include "Global.h"
-#include "SRRdtReceiver.h"
-#include "SRRdtSender.h"
 
 int main(int argc, char *argv[])
 {
-    RdtSender *  ps = new SRRdtSender();
-    RdtReceiver *pr = new SRRdtReceiver();
+    RdtSender *  ps = new GBNTcpRdtSender();
+    RdtReceiver *pr = new GBNTcpRdtReceiver();
     // pns->setRunMode(0);  // VERBOS模式
     pns->setRunMode(1);  //安静模式
     pns->init();
