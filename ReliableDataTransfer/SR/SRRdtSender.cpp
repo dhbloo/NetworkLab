@@ -46,11 +46,13 @@ void SRRdtSender::receive(const Packet &ackPkt)
 
     // 如果校验和正确，并且确认序号在发送方已发送并等待确认的数据包序号中
     if (checkSum == ackPkt.checksum && ackPkt.acknum >= baseSeqNum && ackPkt.acknum < nextSeqNum) {
-        pUtils->printPacket("发送方正确收到确认", ackPkt);
         pns->stopTimer(SENDER, ackPkt.acknum);  // 关闭数据包定时器
 
         unsigned long offset = ackPkt.acknum - baseSeqNum;
         rbuf[offset].ack   = true;  // 将acknum对应的包标记为已接受
+
+        std::stringstream msg;
+        msg << "接收方正确收到确认, 移动滑动窗口(" << baseSeqNum << "," << nextSeqNum;
 
         if (offset == 0) {                              // 如果收到的包序号为base
             while (!rbuf.empty() && rbuf.head().ack) {  // 基序号移动到未确认处开头
@@ -58,6 +60,9 @@ void SRRdtSender::receive(const Packet &ackPkt)
                 baseSeqNum++;  // 基序号向后移动，直到第一个未确认的包
             }
         }
+
+        msg << " -> " << baseSeqNum << "," << nextSeqNum << ")";
+        pUtils->printPacket(msg.str().c_str(), ackPkt);
     }
     else {
         pUtils->printPacket("发送方没有正确收到确认", rbuf.head().packet);

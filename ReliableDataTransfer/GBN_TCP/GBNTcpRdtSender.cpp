@@ -47,12 +47,17 @@ void GBNTcpRdtSender::receive(const Packet &ackPkt)
 
     // 如果校验和正确，并且确认序号在发送方已发送并等待确认的数据包序号中
     if (checkSum == ackPkt.checksum && ackPkt.acknum >= baseSeqNum && ackPkt.acknum < nextSeqNum) {
-        pUtils->printPacket("发送方正确收到确认", ackPkt);
         pns->stopTimer(SENDER, baseSeqNum);  // 关闭定时器
+
+        std::stringstream msg;
+        msg << "发送方正确收到确认, 移动滑动窗口(" << baseSeqNum << "," << nextSeqNum;
 
         int ackCount = ackPkt.acknum - baseSeqNum;
         baseSeqNum   = ackPkt.acknum + 1;
         duplicateCnt = 0;
+
+        msg << " -> " << baseSeqNum << "," << nextSeqNum << ")";
+        pUtils->printPacket(msg.str().c_str(), ackPkt);
 
         for (int i = 0; i <= ackCount; i++) {
             rbuf.get();

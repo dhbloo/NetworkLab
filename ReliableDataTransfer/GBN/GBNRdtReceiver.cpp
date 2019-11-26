@@ -22,12 +22,15 @@ void GBNRdtReceiver::receive(const Packet &packet)
 
     // 如果校验和正确，同时收到报文的序号等于接收方期待收到的报文序号一致
     if (checkSum == packet.checksum && expectSeqNumRcvd == packet.seqnum) {
-        pUtils->printPacket("接收方正确收到发送方的报文", packet);
-
         // 取出Message，向上递交给应用层
         Message msg;
         memcpy(msg.data, packet.payload, sizeof(packet.payload));
         pns->delivertoAppLayer(RECEIVER, msg);
+
+        std::stringstream ms;
+        ms << "接收方正确收到发送方的报文, 移动滑动窗口(" << expectSeqNumRcvd << " -> "
+           << expectSeqNumRcvd + 1 << ")\n";
+        pUtils->printPacket(ms.str().c_str(), packet);
 
         // 发送Ack包, 确认序号等于收到的报文序号
         lastAckPkt.acknum   = packet.seqnum;

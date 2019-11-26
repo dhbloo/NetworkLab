@@ -3,6 +3,8 @@
 #include "Common.h"
 #include "Global.h"
 
+#include <algorithm>
+
 SRRdtReceiver::SRRdtReceiver() : baseSeqNum(0)
 {
     // 初始状态下，上次发送的确认包的确认序号为-1，使得当第一个接受的数据包出错时该确认报文的确认号为-1
@@ -28,8 +30,6 @@ void SRRdtReceiver::receive(const Packet &packet)
 
     // 如果校验和正确，同时收到报文的序号在可接收范围内
     if (checkSum == packet.checksum && offset < WindowSize) {
-        pUtils->printPacket("接收方正确收到发送方的报文", packet);
-
         if (!rbuf[offset].received) {  // 如果该包还没接收过
             rbuf[offset].packet   = packet;
             rbuf[offset].received = true;  // 将数据包标记为已接收
@@ -42,6 +42,9 @@ void SRRdtReceiver::receive(const Packet &packet)
         // 调用模拟网络环境的sendToNetworkLayer，通过网络层发送确认报文
         pns->sendToNetworkLayer(SENDER, lastAckPkt);
 
+        std::stringstream msg;
+        msg << "接收方正确收到发送方的报文, 移动滑动窗口(" << baseSeqNum << "," << baseSeqNum + rbuf.capacity();
+
         if (offset == 0) {                                   // 如果收到的包序号为base
             while (!rbuf.empty() && rbuf.head().received) {  // 将基序号开始的已确认报递交
                 // 取出Message，向上递交给应用层
@@ -53,6 +56,9 @@ void SRRdtReceiver::receive(const Packet &packet)
                 rbuf.put({{}, false});  // 接收区加入一个空位
             }
         }
+
+        msg << " -> " << baseSeqNum << "," << baseSeqNum + rbuf.capacity() << ")\n";
+        pUtils->printPacket(msg.str().c_str(), packet);
     }
     else {
         if (checkSum != packet.checksum) {
