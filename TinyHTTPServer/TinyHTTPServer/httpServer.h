@@ -14,8 +14,6 @@
 #include <string>
 #include <winsock2.h>
 
-class Response;
-
 struct Connection
 {
     SOCKET      socket;

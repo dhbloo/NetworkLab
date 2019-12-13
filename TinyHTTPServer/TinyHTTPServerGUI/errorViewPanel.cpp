@@ -57,5 +57,7 @@ ViewPtr ErrorViewPanel::getView() const
     case 1:
         return MakeFuncView(
             [=](auto &req, auto &res) { throw Redirect(redirect->GetValue().ToStdString(), ""); });
+
+    default: return nullptr;
     }
 }

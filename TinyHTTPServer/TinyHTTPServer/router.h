@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-class Request;
-class Response;
+struct Request;
+struct Response;
 class View;
 using ViewPtr = std::shared_ptr<View>;
 

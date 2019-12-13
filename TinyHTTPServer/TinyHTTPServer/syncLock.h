@@ -35,7 +35,7 @@ inline std::ostream &operator<<(std::ostream &os, SyncLock::out_t lock)
 
 inline std::ostream &operator<<(std::ostream &os, SyncLock::endl_t lock)
 {
-    os << std::endl;
+    os << '\n';
     lock.mtx.unlock();
     return os;
 }

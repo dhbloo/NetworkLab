@@ -131,11 +131,11 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>wxmsw31u_gl.lib;wxmsw31u_stc.lib;wxmsw31u_richtext.lib;wxmsw31u_propgrid.lib;wxmsw31u_ribbon.lib;wxmsw31u_aui.lib;wxmsw31u_xrc.lib;wxbase31u_xml.lib;wxmsw31u_qa.lib;wxmsw31u_webview.lib;wxmsw31u_html.lib;wxmsw31u_media.lib;wxmsw31u_adv.lib;wxmsw31u_core.lib;wxbase31u_net.lib;wxbase31u.lib;wxscintilla.lib;wxexpat.lib;wxtiff.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregexu.lib;comctl32.lib;Rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>

@@ -2,8 +2,8 @@
 #define _HEADER_VIEW_
 #pragma once
 
-class Request;
-class Response;
+struct Request;
+struct Response;
 
 // View 是具体的请求处理逻辑
 class View

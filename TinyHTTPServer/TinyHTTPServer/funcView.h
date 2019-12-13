@@ -5,6 +5,7 @@
 #include "request.h"
 #include "response.h"
 #include "view.h"
+#include <memory>
 
 // 函数View
 // 以任意的lambda函数处理请求
