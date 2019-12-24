@@ -4,7 +4,7 @@
 :: outputname 输出文件名
 :: resultname 程序控制台输出重定向文件名
 
-set appname=".\Debug\GBN_TCP.exe"
+set appname=".\Debug\GBN.exe"
 set inputname="input.txt"
 set outputname="output.txt"
 set resultname="result.txt"
