@@ -16,13 +16,13 @@
 
 struct Connection
 {
-    SOCKET      socket;
-    sockaddr_in addr;
+    SOCKET      socket;  // 客户端连接socket
+    sockaddr_in addr;    // 客户端IPv4地址
 
     ~Connection();
     Connection() : socket(INVALID_SOCKET) {}
+    Connection(const Connection &conn) = delete;
     Connection(Connection &&conn);
-    Connection(SOCKET socket, sockaddr_in addr) : socket(socket), addr(addr) {}
 
     uint16_t    port() const { return ntohs(addr.sin_port); }
     std::string ipv4_str() const { return ip_addr() + ":" + std::to_string(port()); }
@@ -31,49 +31,48 @@ struct Connection
 
 struct ClientInfo
 {
-    Connection &conn;
-    Request     request;
-    Response    response;
-    int         bytesReceived;
-    int         totalBytesReceived;
-    int         bytesSent;
-    int         totalBytesSent;
+    Connection conn;                // 客户端连接(socket与地址信息)
+    Request    request;             // 请求结构
+    Response   response;            // 响应结构
+    int        bytesReceived;       // 单次收到的字节数
+    int        totalBytesReceived;  // 总收到的字节数
+    int        bytesSent;           // 单次发送的字节数
+    int        totalBytesSent;      // 总发送的字节数
 };
 
 class HttpServer
 {
-    SOCKET     listenSocket;
-    Connection listenConn;
+    Connection listenConn;  // 监听连接(socket与地址信息)
 
-    std::ostream &   logStream;
-    SyncLock         logLock;
-    std::atomic_bool running;
-    std::mutex       runningMtx;
+    std::ostream &   logStream;   // 日志流
+    SyncLock         logLock;     // 日志锁
+    std::atomic_bool running;     // 运行中标志
+    std::mutex       runningMtx;  // 运行互斥锁
 
-    Router router;
+    Router router;  // 路由模块
 
     // 记录当前所有客户端连接
-    std::vector<const ClientInfo *> clientList;
-    std::mutex                      clientListMtx;
+    std::vector<ClientInfo *> clientList;
+    std::mutex                clientListMtx;
 
-    void handleConnection(Connection &&conn);
-    bool sendResponse(ClientInfo &client);
+    void handleConnection(Connection &&conn);  // 响应处理线程
+    bool sendResponse(ClientInfo &client);     // 发送响应报文
 
 public:
-    static const int MaxRequestBufferLength = 4096;
-    static const int SelectListenIntervalMS = 500;
-    std::string      serverName             = "TinyHttpServer/0.1 (Windows)";
+    static int  SelectListenIntervalMS;                       // 监听循环等待时长(毫秒)
+    std::string serverName = "TinyHttpServer/0.1 (Windows)";  // 服务器默认名
 
-    HttpServer(const char *host, uint16_t port, const Router &router, std::ostream &ostream);
+    HttpServer(const char *host, uint16_t port, const Router &router, std::ostream &logstream);
     ~HttpServer();
 
-    bool isRunning() const { return running.load(std::memory_order_relaxed); }
-    const std::vector<const ClientInfo *> getCurrentClients() const { return clientList; }
-    std::string                           ipAddress() const { return listenConn.ipv4_str(); }
+    // 状态查询函数
+    bool        isRunning() const { return running.load(std::memory_order_relaxed); }
+    auto        getCurrentClients() const { return clientList; }
+    std::string ipAddress() const { return listenConn.ipv4_str(); }
 
-    void run();
-    void start();
-    void stop();
+    void run();    // 监听循环
+    void start();  // 在新线程启动监听循环
+    void stop();   // 停止线程中的监听循环
 };
 
 #endif  // !_HEADER_HTTPSERVER_

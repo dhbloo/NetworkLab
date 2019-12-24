@@ -12,6 +12,9 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
+constexpr int MaxRequestBufferLength             = 4096;  // 单次请求缓冲区长度
+int           HttpServer::SelectListenIntervalMS = 500;   // 监听循环等待时长(毫秒)
+
 HttpServer::HttpServer(const char *host, uint16_t port, const Router &router, std::ostream &ostream)
     : router(router)
     , logStream(ostream)
@@ -38,17 +41,17 @@ HttpServer::HttpServer(const char *host, uint16_t port, const Router &router, st
     }
 
     // 创建监听套接字
-    listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (listenSocket == INVALID_SOCKET) {
+    listenConn.socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (listenConn.socket == INVALID_SOCKET) {
         freeaddrinfo(result);
         WSACleanup();
         throw std::runtime_error("Error at socket(): " + std::to_string(WSAGetLastError()));
     }
 
     // 套接字绑定端口
-    if (bind(listenSocket, result->ai_addr, (int)result->ai_addrlen) == SOCKET_ERROR) {
+    if (bind(listenConn.socket, result->ai_addr, (int)result->ai_addrlen) == SOCKET_ERROR) {
         freeaddrinfo(result);
-        closesocket(listenSocket);
+        closesocket(listenConn.socket);
         WSACleanup();
         throw std::runtime_error("Bind failed with error: " + std::to_string(WSAGetLastError()));
     }
@@ -57,8 +60,8 @@ HttpServer::HttpServer(const char *host, uint16_t port, const Router &router, st
     freeaddrinfo(result);
 
     // 开始监听
-    if (listen(listenSocket, SOMAXCONN) == SOCKET_ERROR) {
-        closesocket(listenSocket);
+    if (listen(listenConn.socket, SOMAXCONN) == SOCKET_ERROR) {
+        closesocket(listenConn.socket);
         WSACleanup();
         throw std::runtime_error("Listen failed with error: " + std::to_string(WSAGetLastError()));
     }
@@ -77,13 +80,13 @@ HttpServer::~HttpServer()
         stop();
 
     // 关闭监听socket
-    closesocket(listenSocket);
+    closesocket(listenConn.socket);
 
     // 关闭所有已经打开的socket
     {
         std::lock_guard<std::mutex> guard(clientListMtx);
         for (auto c : clientList)
-            closesocket(c->conn.socket);
+            c->conn.~Connection();
     }
 
     WSACleanup();
@@ -97,10 +100,14 @@ HttpServer::~HttpServer()
               << logLock.endl;
 }
 
-void HttpServer::handleConnection(Connection &&conn)
+void HttpServer::handleConnection(Connection &&connection)
 {
-    ClientInfo client {conn, {}, {}, 0, 0, 0, 0};
-    char       recvbuf[MaxRequestBufferLength];
+    ClientInfo        client {std::move(connection), {}, {}, 0, 0, 0, 0};
+    char              recvbuf[MaxRequestBufferLength];
+    const Connection &conn          = client.conn;
+    Response &        response      = client.response;
+    int &             bytesReceived = client.bytesReceived;
+    bool              keepAlive     = true;
 
     // 将本连接的socket加入列表
     {
@@ -111,9 +118,6 @@ void HttpServer::handleConnection(Connection &&conn)
     assert(conn.addr.sin_family == AF_INET);
     logStream << logLock.out << conn.ipv4_str() << " [Info]Connection accepted" << logLock.endl;
 
-    Response &response      = client.response;
-    int &     bytesReceived = client.bytesReceived;
-    bool      keepAlive     = true;
     do {
         std::stringstream receivedDataBuffer;
         // 读取缓冲区数据
@@ -191,7 +195,7 @@ void HttpServer::handleConnection(Connection &&conn)
         }
         // 处理请求终止异常
         catch (Abort a) {
-            response.statusCode = a.statusCode;
+            response.statusCode      = a.statusCode;
             request.headers["error"] = a.what();
             try {
                 // 在Router中寻找是否有局部/全局错误处理View
@@ -231,7 +235,6 @@ void HttpServer::handleConnection(Connection &&conn)
             response.headers["Content-Encoding"] = "identity";
             response.headers["Content-Length"]   = std::to_string(response.body.length());
         }
-        // TODO: MD5
 
         // 发送响应
         if (!sendResponse(client))
@@ -255,10 +258,10 @@ void HttpServer::handleConnection(Connection &&conn)
 bool HttpServer::sendResponse(ClientInfo &client)
 {
     std::string responseStr = client.response.toString();
-    client.bytesSent        = responseStr.size();
+    client.bytesSent        = (int)responseStr.size();
     client.totalBytesSent += client.bytesSent;
 
-    int sendRet = send(client.conn.socket, responseStr.c_str(), responseStr.size(), 0);
+    int sendRet = send(client.conn.socket, responseStr.c_str(), (int)responseStr.size(), 0);
     if (sendRet == SOCKET_ERROR) {
         logStream << logLock.out << client.conn.ipv4_str() << " [Erro]Send(" << responseStr.length()
                   << " bytes) failed with error: " << WSAGetLastError() << ", closing connection"
@@ -276,7 +279,7 @@ void HttpServer::run()
     int    nAddrLen = sizeof(Connection::addr);
     fd_set fdmaster, fdworking;
     FD_ZERO(&fdmaster);
-    FD_SET(listenSocket, &fdmaster);
+    FD_SET(listenConn.socket, &fdmaster);
     const timeval tv = {SelectListenIntervalMS / 1000, 1000 * (SelectListenIntervalMS % 1000)};
 
     while (running.load(std::memory_order_relaxed)) {
@@ -286,7 +289,7 @@ void HttpServer::run()
         if (ret > 0) {
             Connection conn;
             // 阻塞监听线程
-            conn.socket = accept(listenSocket, (sockaddr *)&conn.addr, &nAddrLen);
+            conn.socket = accept(listenConn.socket, (sockaddr *)&conn.addr, &nAddrLen);
 
             if (conn.socket == INVALID_SOCKET) {
                 throw std::runtime_error("Error at accept(): " + std::to_string(WSAGetLastError()));
@@ -319,8 +322,10 @@ void HttpServer::stop()
 
 Connection::~Connection()
 {
-    if (this->socket != INVALID_SOCKET)
-        closesocket(this->socket);
+    if (socket != INVALID_SOCKET) {
+        closesocket(socket);
+        socket = INVALID_SOCKET;
+    }
 }
 
 Connection::Connection(Connection &&conn)
